@@ -29,7 +29,7 @@ class Parser:
         return ['Abichev', 'Andrianov', 'Nekrasov']
 
     def get_stat(self, name):
-        '''
+        t'''
         Returns all not solved problems sorted by count of people solved this problem
         '''
         pass
