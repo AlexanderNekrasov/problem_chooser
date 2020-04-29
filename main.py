@@ -1,4 +1,5 @@
 from parser import *
+from sfml import sf
 
 
 FONT = sf.Font.from_file("DejaVuSansMono.ttf")
