@@ -3,7 +3,9 @@ from sfml import sf
 
 
 FONT = sf.Font.from_file("data/DejaVuSansMono.ttf")
+print('loading data...')
 parser = Parser()
+print('loaded')
 
 
 class GUI:
