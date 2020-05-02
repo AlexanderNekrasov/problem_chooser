@@ -64,22 +64,23 @@ class Problem:
         return round(score, 5)
 
     def __lt__(self, other):
-        return (self.score, self.contest.id) < (other.score, other.contest.id)
+        return (self.score, self.contest.id, self.id) < (other.score, other.contest.id, self.id)
 
     def __le__(self, other):
-        return (self.score, self.contest.id) <= (other.score, other.contest.id)
+        return (self.score, self.contest.id, self.id) <= (other.score, other.contest.id, self.id)
 
     def __gt__(self, other):
-        return (self.score, self.contest.id) > (other.score, other.contest.id)
+        return (self.score, self.contest.id, self.id) > (other.score, other.contest.id, self.id)
 
     def __ge__(self, other):
-        return (self.score, self.contest.id) >= (other.score, other.contest.id)
+        return (self.score, self.contest.id, self.id) >= (other.score, other.contest.id, self.id)
 
     def __iadd__(self, verdict):
         if isinstance(verdict, int):
             self.attempts += verdict
         elif verdict != 'NO':
             self.verdicts[verdict] += 1
+            self.attempts += 1
         return self
 
     def __str__(self):
@@ -149,7 +150,7 @@ class Parser:
             self.participants[par.name] = par
             for prob_id in range(self.n_probs):
                 self.problems[prob_id] += par.verdicts[prob_id]
-                self.problems[prob_id] += par.attempts[prob_id]
+                self.problems[prob_id] += max(0, par.attempts[prob_id] - 1)
 
     def get_names(self):
         return list(self.participants.keys())

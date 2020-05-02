@@ -1,7 +1,10 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 from parser import Parser
 
+
+print('loading data...')
 parser = Parser() 
+print('loaded')
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
@@ -32,9 +35,9 @@ class Ui_MainWindow(object):
         self.statusbar = QtWidgets.QStatusBar(MainWindow)
         self.statusbar.setObjectName("statusbar")
         MainWindow.setStatusBar(self.statusbar)
-
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
+        self.update_list()
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
