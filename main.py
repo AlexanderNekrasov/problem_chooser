@@ -1,85 +1,84 @@
-from parser import *
-from sfml import sf
+from PyQt5 import QtCore, QtGui, QtWidgets
+from parser import Parser
+
+parser = Parser() 
+
+class Ui_MainWindow(object):
+    def setupUi(self, MainWindow):
+        MainWindow.setObjectName("MainWindow")
+        MainWindow.resize(528, 604)
+        self.centralwidget = QtWidgets.QWidget(MainWindow)
+        self.centralwidget.setObjectName("centralwidget")
+        self.label = QtWidgets.QLabel(self.centralwidget)
+        self.label.setGeometry(QtCore.QRect(20, 10, 461, 20))
+        self.label.setMinimumSize(QtCore.QSize(57, 0))
+        self.label.setObjectName("label")
+        self.lineEdit = QtWidgets.QLineEdit(self.centralwidget)
+        self.lineEdit.setGeometry(QtCore.QRect(20, 40, 481, 23))
+        self.lineEdit.setInputMask("")
+        self.lineEdit.setObjectName("lineEdit")
+        self.lineEdit.textChanged.connect(self.update_list)
+        self.listView = QtWidgets.QListView(self.centralwidget)
+        self.listView.setGeometry(QtCore.QRect(20, 80, 481, 481))
+        self.listView.setObjectName("listView")
+        self.listView.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
+        self.listViewModel = QtGui.QStandardItemModel()
+        self.listView.setModel(self.listViewModel)
+        MainWindow.setCentralWidget(self.centralwidget)
+        self.menubar = QtWidgets.QMenuBar(MainWindow)
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 528, 20))
+        self.menubar.setObjectName("menubar")
+        MainWindow.setMenuBar(self.menubar)
+        self.statusbar = QtWidgets.QStatusBar(MainWindow)
+        self.statusbar.setObjectName("statusbar")
+        MainWindow.setStatusBar(self.statusbar)
+
+        self.retranslateUi(MainWindow)
+        QtCore.QMetaObject.connectSlotsByName(MainWindow)
+
+    def retranslateUi(self, MainWindow):
+        _translate = QtCore.QCoreApplication.translate
+        MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
+        self.label.setText(_translate("MainWindow", "Find easiest problems for you"))
+        self.lineEdit.setPlaceholderText(_translate("MainWindow", "Input your name here"))
+
+    def update_list(self):
+        name = self.lineEdit.text()
+        names = parser.get_names()
+        self.listViewModel.clear()
+        good_names = []
+        for el in names:
+            if len(el) >= len(name) and el[:len(name)] == name:
+                good_names.append(el)
+                row = QtGui.QStandardItem()
+                row.setText(el)
+                self.listViewModel.appendRow(row)
+        if len(good_names) == 1:
+            name = good_names[0]
+            stat = parser.get_stat(name)
+            head_row = QtGui.QStandardItem()
+            head_row.setChild(0, 0, QtGui.QStandardItem("Contest id"))
+            head_row.setChild(1, 0, QtGui.QStandardItem("Problem"))
+            self.listViewModel.appendRow(head_row)
+            head_row = QtGui.QStandardItem("{:<15} {:<15} {:<15}".format("Contest id", "Problem", "Score"))
+            self.listViewModel.appendRow(head_row)
+            for el in stat:
+                row = QtGui.QStandardItem("{:<15} {:<15} {:<15}".format(el.contest.id, el.short_name, el.score))
+                self.listViewModel.appendRow(row)
 
 
-FONT = sf.Font.from_file("data/DejaVuSansMono.ttf")
-parser = Parser()
 
 
-class GUI:
-    def __init__(self):
-        self.header = sf.Text("Find easiest problems for you", FONT, 18)
-        self.name = sf.Text("", FONT, 16)
-        self.name.color = sf.Color.GREEN
-        self.name.position = sf.Vector2(30, 30)
-        # self.header.color = sf.Color.WHITE
-        self.autocompleter_list = []
+if __name__ == "__main__":
+    import sys
 
-    def update_autocompleter_list(self):
-        cur_string = self.name.string
-        self.autocompleter_list = []
-        for el in parser.get_names():
-            if len(cur_string) <= len(el):
-                if el[:len(cur_string)] == cur_string:
-                    self.autocompleter_list.append(el)
-
-    def draw(self, window):
-        self.update_autocompleter_list()
-        window.draw(self.header)
-        name_empty = False
-        if len(self.name.string) == 0:
-            name_empty = 1
-            self.name.string = "Input your name here:"
-        window.draw(self.name)
-        cur_y = 60
-        MENU_HEIGHT = 25
-        for el in self.autocompleter_list:
-            text = sf.Text(el, FONT, 18)
-            text.position = sf.Vector2(30, cur_y)
-            text.color = sf.Color.WHITE
-            window.draw(text)
-            cur_y += MENU_HEIGHT
-
-        if len(self.autocompleter_list) == 1:
-            cur_y += 20
-            stat = parser.get_stat(self.autocompleter_list[0])
-            cnt = min(20, len(stat))
-            text = sf.Text("{:<15} {:<15} {:<15}".format("Contest_id", "Problem", "Score"), FONT, 18)
-            text.position=sf.Vector2(30, cur_y)
-            text.color = sf.Color.WHITE
-            window.draw(text)
-            cur_y += MENU_HEIGHT
-            for i in range(cnt):
-                text = sf.Text("{:<15} {:<15} {:<15}".format(stat[i].contest.id, stat[i].short_name, stat[i].score), FONT, 18)
-                text.position=sf.Vector2(30, cur_y)
-                text.color = sf.Color.WHITE
-                window.draw(text)
-                cur_y += MENU_HEIGHT
-
-        if name_empty:
-            self.name.string = ""
-
-
-    def text_entered(self, c):
-        print(c)
-        if ord(c) == 8:
-            if len(self.name.string):
-                self.name.string = self.name.string[:-1]
-        if ord(c) >= 32:
-            self.name.string += c
-
-
-gui = GUI()
-window = sf.RenderWindow(sf.VideoMode(600, 700), "Problem Chooser v1.0")
-running = True
-while running:
-    event = window.poll_event()
-    while event:
-        if event.type == sf.Event.CLOSED:
-            running = False
-        if event.type == sf.Event.TEXT_ENTERED:
-            gui.text_entered(event.get('unicode'))
-        event = window.poll_event()
-    window.clear(sf.Color.BLACK)
-    gui.draw(window)
-    window.display()
+    font = QtGui.QFont()
+    font.setPixelSize(16)
+    font.setStyleHint(QtGui.QFont.Monospace)
+    app = QtWidgets.QApplication(sys.argv)
+    MainWindow = QtWidgets.QMainWindow()
+    MainWindow.setFont(font)
+    ui = Ui_MainWindow()
+    ui.setupUi(MainWindow)
+    MainWindow.show()
+    sys.exit(app.exec_())
