@@ -70,7 +70,7 @@ class GUI:
 
 
 gui = GUI()
-window = sf.RenderWindow(sf.VideoMode(600, 700), "Parse Informatics Conduit")
+window = sf.RenderWindow(sf.VideoMode(600, 700), "Problem Chooser v1.0")
 running = True
 while running:
     event = window.poll_event()
