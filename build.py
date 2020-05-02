@@ -16,16 +16,23 @@ except (ImportError, ModuleNotFoundError):
     print('pip install pyinstaller --user')
     exit(0)
 
-if isdir('dist'):
-    print('removing dist/')
-    shutil.rmtree('dist')
+
+NAME = 'problem-chooser-v1.0'
+
+if isdir(NAME):
+    print('removing ' + NAME)
+    shutil.rmtree(NAME)
     print('successfully removed')
 
 system('pyinstaller -F main.py')
 
 shutil.rmtree('build')
-shutil.rmtree('__pycache__')
+shutil.rmtree('__pycache__', ignore_errors=True)
 remove('main.spec')
 shutil.copytree('data', 'dist/data')
 
-print('all files in dist/')
+shutil.move('dist', NAME)
+shutil.make_archive(NAME, 'zip', NAME)
+shutil.move(NAME + '.zip', NAME)
+
+print('all files in problem-chooser-v1.0/')
