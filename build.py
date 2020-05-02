@@ -2,20 +2,25 @@ from sys import exit
 from os import system, remove
 from os.path import isdir
 
-try:
-    import shutil
-except (ImportError, ModuleNotFoundError):
-    print('Please, install shutil')
-    print('pip install shutil --user')
-    exit(0)
 
-try:
-    import PyInstaller
-except (ImportError, ModuleNotFoundError):
-    print('Please, install PyInstaller')
-    print('pip install pyinstaller --user')
-    exit(0)
+def try_import(lib, piplib=None):
+    if piplib is None:
+        piplib = lib
+    try:
+        lb = __import__(lib)
+    except (ImportError, ModuleNotFoundError):
+        print('Please, install ' + lib)
+        print('pip install ' + piplib + ' --user')
+        exit(0)
+    return lb
 
+
+shutil = try_import('shutil')
+try_import('PyInstaller', 'pyinstaller')
+try_import('sfml')
+try_import('re')
+try_import('requests')
+try_import('bs4')
 
 NAME = 'problem-chooser-v1.0'
 
