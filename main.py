@@ -10,6 +10,7 @@ class GUI:
     def __init__(self):
         self.header = sf.Text("Find easiest problems for you", FONT, 18)
         self.name = sf.Text("", FONT, 16)
+        self.name.color = sf.Color.GREEN
         self.name.position = sf.Vector2(30, 30)
         # self.header.color = sf.Color.WHITE
         self.autocompleter_list = []
@@ -29,7 +30,6 @@ class GUI:
         if len(self.name.string) == 0:
             name_empty = 1
             self.name.string = "Input your name here:"
-            self.name.color = sf.Color.GREEN
         window.draw(self.name)
         cur_y = 60
         MENU_HEIGHT = 25
@@ -39,20 +39,38 @@ class GUI:
             text.color = sf.Color.WHITE
             window.draw(text)
             cur_y += MENU_HEIGHT
+
+        if len(self.autocompleter_list) == 1:
+            cur_y += 20
+            stat = parser.get_stat(self.autocompleter_list[0])
+            cnt = min(20, len(stat))
+            text = sf.Text("{:<15} {:<15} {:<15}".format("Contest_id", "Problem", "Score"), FONT, 18)
+            text.position=sf.Vector2(30, cur_y)
+            text.color = sf.Color.WHITE
+            window.draw(text)
+            cur_y += MENU_HEIGHT
+            for i in range(cnt):
+                text = sf.Text("{:<15} {:<15} {:<15}".format(stat[i].contest.id, stat[i].short_name, stat[i].score), FONT, 18)
+                text.position=sf.Vector2(30, cur_y)
+                text.color = sf.Color.WHITE
+                window.draw(text)
+                cur_y += MENU_HEIGHT
+
         if name_empty:
             self.name.string = ""
-            self.name.color = sf.Color.WHITE
+
 
     def text_entered(self, c):
+        print(c)
         if ord(c) == 8:
             if len(self.name.string):
                 self.name.string = self.name.string[:-1]
-        if 177 > ord(c) >= 40:
+        if ord(c) >= 32:
             self.name.string += c
 
 
 gui = GUI()
-window = sf.RenderWindow(sf.VideoMode(800, 600), "Parse Informatics Conduit")
+window = sf.RenderWindow(sf.VideoMode(600, 700), "Parse Informatics Conduit")
 running = True
 while running:
     event = window.poll_event()
@@ -60,8 +78,7 @@ while running:
         if event.type == sf.Event.CLOSED:
             running = False
         if event.type == sf.Event.TEXT_ENTERED:
-            if ord(event.get("unicode")) < 128:
-                gui.text_entered(event.get('unicode'))
+            gui.text_entered(event.get('unicode'))
         event = window.poll_event()
     window.clear(sf.Color.BLACK)
     gui.draw(window)
