@@ -2,7 +2,7 @@ from parser import *
 from sfml import sf
 
 
-FONT = sf.Font.from_file("DejaVuSansMono.ttf")
+FONT = sf.Font.from_file("data/DejaVuSansMono.ttf")
 parser = Parser()
 
 
