@@ -35,7 +35,7 @@ shutil.move('dist', NAME)
 with zipfile.ZipFile(NAME + '.zip', 'w') as z:
     for root, dirs, files in os.walk(NAME):
         for f in files:
-           z.write(os.path.join(root, f))
+            z.write(os.path.join(root, f))
 
 
 shutil.move(NAME + '.zip', NAME)

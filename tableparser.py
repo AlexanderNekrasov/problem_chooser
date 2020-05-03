@@ -6,11 +6,13 @@ from copy import deepcopy
 
 TABLE_URL = 'https://server.179.ru/shashkov/stand_b22.php'
 
-ALLOWED_VERDICTS = ('NO', 'OK', 'RJ', 'PR', 'WA', 'PE', 'RT', 'TL', 'ML', 'SV', 'IG', 'DQ', 'CF', 'CE', 'WT', 'SM')
+ALLOWED_VERDICTS = ('NO', 'OK', 'RJ', 'PR', 'WA', 'PE', 'RT', 'TL', 'ML',
+                    'SV', 'IG', 'DQ', 'CF', 'CE', 'WT', 'SM')
 OK_VERDICTS = ('OK', 'PR')
 WA_VERDICTS = ('RJ', 'WA', 'PE', 'RT', 'TL', 'ML', 'SM')
 BAD_VERDICTS = ('DQ', 'CF')
-TOSOLVE_VERDICTS = ('NO', 'RJ', 'WA', 'PE', 'RT', 'TL', 'ML', 'SV', 'IG', 'CF', 'CE', 'WT', 'SM')
+TOSOLVE_VERDICTS = ('NO', 'RJ', 'WA', 'PE', 'RT', 'TL', 'ML', 'SV', 'IG',
+                    'CF', 'CE', 'WT', 'SM')
 
 
 class Contest:
@@ -27,7 +29,8 @@ class Contest:
         self.first_prob_id = first_prob_id
         self.prob_short_names = []
         self.prob_full_names = []
-        for prob_id in range(self.first_prob_id, self.first_prob_id + self.n_probs):
+        for prob_id in range(self.first_prob_id, self.first_prob_id +
+                             self.n_probs):
             self.prob_full_names.append(tds_prob_names[prob_id]['title'])
             self.prob_short_names.append(tds_prob_names[prob_id].text)
 
@@ -64,16 +67,20 @@ class Problem:
         return round(score, 5)
 
     def __lt__(self, other):
-        return (self.score, self.contest.id, self.id) < (other.score, other.contest.id, self.id)
+        return (self.score, self.contest.id, self.id) < \
+                (other.score, other.contest.id, self.id)
 
     def __le__(self, other):
-        return (self.score, self.contest.id, self.id) <= (other.score, other.contest.id, self.id)
+        return (self.score, self.contest.id, self.id) <= \
+                (other.score, other.contest.id, self.id)
 
     def __gt__(self, other):
-        return (self.score, self.contest.id, self.id) > (other.score, other.contest.id, self.id)
+        return (self.score, self.contest.id, self.id) > \
+                (other.score, other.contest.id, self.id)
 
     def __ge__(self, other):
-        return (self.score, self.contest.id, self.id) >= (other.score, other.contest.id, self.id)
+        return (self.score, self.contest.id, self.id) >= \
+                (other.score, other.contest.id, self.id)
 
     def __iadd__(self, verdict):
         if isinstance(verdict, int):
@@ -138,9 +145,11 @@ class Parser:
         self.contests = []
         self.problems = []
         for td_contest in tds_contests:
-            self.contests.append(Contest(td_contest, len(self.problems), tds_problem_names))
+            self.contests.append(Contest(td_contest, len(self.problems),
+                                         tds_problem_names))
             for i in range(self.contests[-1].n_probs):
-                self.problems.append(Problem(self.contests[-1], len(self.problems)))
+                self.problems.append(Problem(self.contests[-1],
+                                             len(self.problems)))
         self.n_probs = len(self.problems)
         self.n_conts = len(self.contests)
 

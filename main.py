@@ -3,8 +3,9 @@ from tableparser import Parser
 
 
 print('loading data...')
-parser = Parser() 
+parser = Parser()
 print('loaded')
+
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
@@ -24,7 +25,9 @@ class Ui_MainWindow(object):
         self.listView = QtWidgets.QListView(self.centralwidget)
         self.listView.setGeometry(QtCore.QRect(20, 80, 481, 481))
         self.listView.setObjectName("listView")
-        self.listView.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
+        self.listView.setEditTriggers(
+                QtWidgets.QAbstractItemView.NoEditTriggers
+                )
         self.listViewModel = QtGui.QStandardItemModel()
         self.listView.setModel(self.listViewModel)
         MainWindow.setCentralWidget(self.centralwidget)
@@ -42,8 +45,10 @@ class Ui_MainWindow(object):
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
-        self.label.setText(_translate("MainWindow", "Find easiest problems for you"))
-        self.lineEdit.setPlaceholderText(_translate("MainWindow", "Input your name here"))
+        self.label.setText(_translate("MainWindow",
+                                      "Find easiest problems for you"))
+        self.lineEdit.setPlaceholderText(_translate("MainWindow",
+                                                    "Input your name here"))
 
     def update_list(self):
         name = self.lineEdit.text()
@@ -70,13 +75,15 @@ class Ui_MainWindow(object):
             head_row.setChild(0, 0, QtGui.QStandardItem("Contest id"))
             head_row.setChild(1, 0, QtGui.QStandardItem("Problem"))
             self.listViewModel.appendRow(head_row)
-            head_row = QtGui.QStandardItem("{:<15} {:<15} {:<15}".format("Contest id", "Problem", "Score"))
+            head_row = QtGui.QStandardItem(
+                    "{:<15} {:<15} {:<15}".format("Contest id",
+                                                  "Problem", "Score"))
             self.listViewModel.appendRow(head_row)
             for el in stat:
-                row = QtGui.QStandardItem("{:<15} {:<15} {:<15}".format(el.contest.id, el.short_name, el.score))
+                row = QtGui.QStandardItem(
+                        "{:<15} {:<15} {:<15}".format(el.contest.id,
+                                                      el.short_name, el.score))
                 self.listViewModel.appendRow(row)
-
-
 
 
 if __name__ == "__main__":
