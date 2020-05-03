@@ -1,5 +1,5 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
-from parser import Parser
+from tableparser import Parser
 
 
 print('loading data...')
