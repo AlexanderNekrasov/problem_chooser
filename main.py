@@ -56,6 +56,13 @@ class Ui_MainWindow(object):
                 row = QtGui.QStandardItem()
                 row.setText(el)
                 self.listViewModel.appendRow(row)
+        if not good_names:
+            for el in names:
+                if name in el:
+                    good_names.append(el)
+                    row = QtGui.QStandardItem()
+                    row.setText(el)
+                    self.listViewModel.appendRow(row)
         if len(good_names) == 1:
             name = good_names[0]
             stat = parser.get_stat(name)
