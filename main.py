@@ -2,12 +2,23 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from tableparser import Parser
 
 
+from_cache = ''
+while from_cache not in ('y', 'n'):
+    from_cache = input('Load from cache? (y/n) ').lower()
+
 print('loading data...')
-parser = Parser()
+if from_cache == 'y':
+    print('loading from cache...')
+    parser = Parser.from_cache()
+else:
+    print('loading from server...')
+    parser = Parser.from_server()
+    parser.save_cache()
 print('loaded')
 
 
 class Ui_MainWindow(object):
+
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(528, 604)
@@ -26,8 +37,8 @@ class Ui_MainWindow(object):
         self.listView.setGeometry(QtCore.QRect(20, 80, 481, 481))
         self.listView.setObjectName("listView")
         self.listView.setEditTriggers(
-                QtWidgets.QAbstractItemView.NoEditTriggers
-                )
+            QtWidgets.QAbstractItemView.NoEditTriggers
+        )
         self.listViewModel = QtGui.QStandardItemModel()
         self.listView.setModel(self.listViewModel)
         MainWindow.setCentralWidget(self.centralwidget)
@@ -76,18 +87,19 @@ class Ui_MainWindow(object):
             head_row.setChild(1, 0, QtGui.QStandardItem("Problem"))
             self.listViewModel.appendRow(head_row)
             head_row = QtGui.QStandardItem(
-                    "{:<15} {:<15} {:<15}".format("Contest id",
-                                                  "Problem", "Score"))
+                "{:<15} {:<15} {:<15}".format("Contest id",
+                                              "Problem", "Score"))
             self.listViewModel.appendRow(head_row)
             for el in stat:
                 row = QtGui.QStandardItem(
-                        "{:<15} {:<15} {:<15}".format(el.contest.id,
-                                                      el.short_name, el.score))
+                    "{:<15} {:<15} {:<15}".format(el.contest.id,
+                                                  el.short_name, el.score))
                 self.listViewModel.appendRow(row)
 
 
 if __name__ == "__main__":
     import sys
+
 
     font = QtGui.QFont()
     font.setPixelSize(16)
