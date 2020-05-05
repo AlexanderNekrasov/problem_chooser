@@ -1,0 +1,25 @@
+#!/bin/bash
+unset GIT_DIR
+cd "$(git rev-parse --show-toplevel)"
+LINTCMD="pycodestyle"
+
+STAGED_FILES=($(git diff --cached --name-only --diff-filter=ACM | grep -oP ".*\.py$"))
+
+echo "Checking ${#STAGED_FILES[@]} files"
+
+if [[ "$STAGED_FILES" = "" ]]; then
+  exit 0
+fi
+
+$LINTCMD "${STAGED_FILES[@]}" 
+
+LINT_EXIT="$?"
+
+if [[ "${LINT_EXIT}" == 0 ]]; then
+printf "\n\033[42mCOMMIT SUCCEEDED\033[0m\n"
+else
+ printf "\n\033[41mCOMMIT FAILED:\033[0m Fix linter errors and try again\n"
+ exit 1
+fi
+
+exit $?
