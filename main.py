@@ -1,4 +1,5 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
+from RowSpanTableWidget import RowSpanTableWidget
 from tableparser import Parser
 
 
@@ -32,15 +33,12 @@ class Ui_MainWindow(object):
         self.lineEdit.setGeometry(QtCore.QRect(20, 40, 481, 23))
         self.lineEdit.setInputMask("")
         self.lineEdit.setObjectName("lineEdit")
-        self.lineEdit.textChanged.connect(self.update_list)
-        self.listView = QtWidgets.QListView(self.centralwidget)
-        self.listView.setGeometry(QtCore.QRect(20, 80, 481, 481))
-        self.listView.setObjectName("listView")
-        self.listView.setEditTriggers(
-            QtWidgets.QAbstractItemView.NoEditTriggers
-        )
-        self.listViewModel = QtGui.QStandardItemModel()
-        self.listView.setModel(self.listViewModel)
+        self.lineEdit.textChanged.connect(self.update_table)
+        self.table = RowSpanTableWidget(3, self.centralwidget)
+        self.table.setGeometry(QtCore.QRect(20, 80, 481, 481))
+        self.table.setObjectName("table")
+        self.table.horizontalHeader().setSectionResizeMode(
+                QtWidgets.QHeaderView.Stretch)
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
         self.menubar.setGeometry(QtCore.QRect(0, 0, 528, 20))
@@ -57,51 +55,40 @@ class Ui_MainWindow(object):
         MainWindow.setStatusBar(self.statusbar)
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
-        self.update_list()
+        self.update_table()
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
-        MainWindow.setWindowTitle(_translate("Problem Chooser v1.0",
+        MainWindow.setWindowTitle(_translate("MainWindow",
                                              "Problem Chooser v1.0"))
         self.label.setText(_translate("MainWindow",
                                       "Find easiest problems for you"))
         self.lineEdit.setPlaceholderText(_translate("MainWindow",
                                                     "Input your name here"))
 
-    def update_list(self):
+    def update_table(self):
         name = self.lineEdit.text()
         names = parser.get_names()
-        self.listViewModel.clear()
+        self.table.clear()
         good_names = []
         for el in names:
             if len(el) >= len(name) and el[:len(name)] == name:
                 good_names.append(el)
-                row = QtGui.QStandardItem()
-                row.setText(el)
-                self.listViewModel.appendRow(row)
+                self.table.appendRow([3], el)
         if not good_names:
             for el in names:
                 if name in el:
                     good_names.append(el)
-                    row = QtGui.QStandardItem()
-                    row.setText(el)
-                    self.listViewModel.appendRow(row)
+                    self.table.appendRow([3], el)
         if len(good_names) == 1:
             name = good_names[0]
             stat = parser.get_stat(name)
-            head_row = QtGui.QStandardItem()
-            head_row.setChild(0, 0, QtGui.QStandardItem("Contest id"))
-            head_row.setChild(1, 0, QtGui.QStandardItem("Problem"))
-            self.listViewModel.appendRow(head_row)
-            head_row = QtGui.QStandardItem(
-                "{:<15} {:<15} {:<15}".format("Contest id",
-                                              "Problem", "Score"))
-            self.listViewModel.appendRow(head_row)
+            self.table.appendRow([1, 1, 1], ["Contest id", "Problem", "Score"])
             for el in stat:
-                row = QtGui.QStandardItem(
-                    "{:<15} {:<15} {:<15}".format(el.contest.id,
-                                                  el.short_name, el.score))
-                self.listViewModel.appendRow(row)
+                self.table.appendRow(
+                        [1, 1, 1],
+                        map(str, [el.contest.id, el.short_name, el.score])
+                        )
 
     def open_help(self):
         QtWidgets.QMessageBox.about(self.centralwidget, "Help",

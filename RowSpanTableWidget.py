@@ -1,20 +1,21 @@
 from PyQt5 import QtCore, QtWidgets
+from collections.abc import Iterable
 
 
 class RowSpanTableWidget(QtWidgets.QTableWidget):
 
-    def __init__(self, maxColumnCount):
-        super().__init__()
+    def __init__(self, maxColumnCount, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.setColumnCount(maxColumnCount)
         self.horizontalHeader().setVisible(False)
         self.verticalHeader().setVisible(False)
 
     def _fix_spans_and_texts(self, spans_, texts_):
-        if type(spans_) not in (list, tuple):
+        if not isinstance(spans_, Iterable):
             spans = [spans_]
         else:
             spans = list(spans_)
-        if type(texts_) not in (list, tuple):
+        if not isinstance(texts_, Iterable) or isinstance(texts_, str):
             texts = [texts_]
         else:
             texts = list(texts_)
@@ -48,3 +49,6 @@ class RowSpanTableWidget(QtWidgets.QTableWidget):
             newItem.setFlags(QtCore.Qt.ItemIsEnabled)
             self.setItem(ind, jnd, newItem)
             jnd += cell_size
+
+    def clear(self):
+        self.setRowCount(0)

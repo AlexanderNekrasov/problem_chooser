@@ -1,3 +1,8 @@
+import sys
+import os
+import shutil
+import zipfile
+from pkg_resources import require
 NAME = 'problem-chooser-v1.0'
 
 
@@ -13,9 +18,6 @@ def try_import(lib, piplib=None):
         exit(0)
 
 
-import sys, os, shutil, zipfile
-
-from pkg_resources import require
 require(['PyInstaller>=3.6'])
 require(open('requirements.txt').read().strip().split('\n'))
 
