@@ -44,6 +44,12 @@ class Ui_MainWindow(object):
         self.menubar.setGeometry(QtCore.QRect(0, 0, 528, 20))
         self.menubar.setObjectName("menubar")
         MainWindow.setMenuBar(self.menubar)
+        self.reloadButton = QtWidgets.QAction("Reload (~5 sec)")
+        self.reloadButton.setShortcut("Ctrl+R")
+        self.reloadButton.setStatusTip("Reload Table")
+        self.reloadButton.triggered.connect(self.reload_table)
+        self.tableMenu = self.menubar.addMenu("&Table")
+        self.tableMenu.addAction(self.reloadButton)
         self.helpButton = QtWidgets.QAction("Help")
         self.helpButton.setShortcut("Ctrl+H")
         self.helpButton.setStatusTip("Open help")
@@ -93,6 +99,11 @@ class Ui_MainWindow(object):
     def open_help(self):
         QtWidgets.QMessageBox.about(self.centralwidget, "Help",
                                     "Текст-заглушка")
+
+    def reload_table(self):
+        global parser
+        parser = Parser.from_server()
+        parser.save_cache()
 
 
 if __name__ == "__main__":
