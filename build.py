@@ -13,16 +13,14 @@ def try_import(lib, piplib=None):
         exit(0)
 
 
-sys = try_import('sys')
-os = try_import('os')
-shutil = try_import('shutil')
-zipfile = try_import('zipfile')
-try_import('PyInstaller', 'pyinstaller')
-pkg_res = try_import('pkg_resources', 'Resource')
-pkg_res.require(open('requirements.txt').read().strip().split('\n'))
+import sys, os, shutil, zipfile
+
+from pkg_resources import require
+require(['PyInstaller>=3.6'])
+require(open('requirements.txt').read().strip().split('\n'))
 
 shutil.rmtree(NAME, ignore_errors=True)
-os.system('pyinstaller -F main.py --clean')
+os.system(sys.executable + ' -m PyInstaller -F main.py --clean')
 shutil.rmtree('build')
 os.remove('main.spec')
 shutil.move('dist', NAME)
