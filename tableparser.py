@@ -32,7 +32,7 @@ class Contest:
         self.prob_short_names = []
         self.prob_full_names = []
         for prob_id in range(self.first_prob_id, self.first_prob_id +
-                                                 self.n_probs):
+                             self.n_probs):
             self.prob_full_names.append(tds_prob_names[prob_id]['title'])
             self.prob_short_names.append(tds_prob_names[prob_id].text)
 
@@ -149,13 +149,13 @@ class Parser:
             html = text[len(mtch.group(0)):]
             p.set_from_html(html)
             return p
-        except:
+        except Exception as ex:
             raise Exception('There are some problems with cache. Please '
                             'update the cache by get table from server.')
 
     def save_cache(self, location=CACHE_LOCATION):
         f = cachepath.CachePath(location)
-        f.write_text(str(self.first_contest) + ' ' + str(self.last_contest) + \
+        f.write_text(str(self.first_contest) + ' ' + str(self.last_contest) +
                      '\n' + self.html)
 
     @staticmethod
@@ -166,14 +166,13 @@ class Parser:
     def delete_cache(location=CACHE_LOCATION):
         return cachepath.CachePath(location).rm()
 
-
     @staticmethod
     def from_server(first_contest=690, last_contest=5000):
         try:
             html = Parser.get_table_html(first_contest, last_contest)
             p = Parser(first_contest, last_contest)
             p.set_from_html(html)
-        except:
+        except Exception as ex:
             raise Exception('There are some problems with server. Please '
                             'check the server is up or you Internet '
                             'connection.')

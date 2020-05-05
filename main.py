@@ -46,6 +46,12 @@ class Ui_MainWindow(object):
         self.menubar.setGeometry(QtCore.QRect(0, 0, 528, 20))
         self.menubar.setObjectName("menubar")
         MainWindow.setMenuBar(self.menubar)
+        self.helpButton = QtWidgets.QAction("Help")
+        self.helpButton.setShortcut("Ctrl+H")
+        self.helpButton.setStatusTip("Open help")
+        self.helpButton.triggered.connect(self.open_help)
+        self.fileMenu = self.menubar.addMenu("&Help")
+        self.fileMenu.addAction(self.helpButton)
         self.statusbar = QtWidgets.QStatusBar(MainWindow)
         self.statusbar.setObjectName("statusbar")
         MainWindow.setStatusBar(self.statusbar)
@@ -55,7 +61,8 @@ class Ui_MainWindow(object):
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
-        MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
+        MainWindow.setWindowTitle(_translate("Problem Chooser v1.0",
+                                             "Problem Chooser v1.0"))
         self.label.setText(_translate("MainWindow",
                                       "Find easiest problems for you"))
         self.lineEdit.setPlaceholderText(_translate("MainWindow",
@@ -96,11 +103,13 @@ class Ui_MainWindow(object):
                                                   el.short_name, el.score))
                 self.listViewModel.appendRow(row)
 
+    def open_help(self):
+        QtWidgets.QMessageBox.about(self.centralwidget, "Help",
+                                    "Текст-заглушка")
+
 
 if __name__ == "__main__":
     import sys
-
-
     font = QtGui.QFont()
     font.setPixelSize(16)
     font.setStyleHint(QtGui.QFont.Monospace)
