@@ -4,8 +4,8 @@ from collections.abc import Iterable
 
 class RowSpanTableWidget(QtWidgets.QTableWidget):
 
-    def __init__(self, maxColumnCount, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, maxColumnCount, *args):
+        super().__init__(*args)
         self.setColumnCount(maxColumnCount)
         self.horizontalHeader().setVisible(False)
         self.verticalHeader().setVisible(False)
