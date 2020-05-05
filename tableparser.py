@@ -6,13 +6,14 @@ import cachepath
 
 
 TABLE_URL = 'https://server.179.ru/shashkov/stand_b22.php'
-CACHE_LOCATION = 'saved_table'
+CACHE_LOCATION = 'problem_chooser_saved_table'
 
 ALLOWED_VERDICTS = ('NO', 'OK', 'RJ', 'PR', 'WA', 'PE', 'RT', 'TL', 'ML',
-                    'SV', 'IG', 'DQ', 'CF', 'CE', 'WT', 'SM')
-OK_VERDICTS = ('OK', 'PR')
+                    'SV', 'IG', 'DQ', 'CF', 'CE', 'WT', 'SM', 'SY', 'SK',
+                    'SE', 'PD', 'PT')
+OK_VERDICTS = ('OK', 'PR', 'PD')
 WA_VERDICTS = ('RJ', 'WA', 'PE', 'RT', 'TL', 'ML', 'SM')
-BAD_VERDICTS = ('DQ', 'CF')
+BAD_VERDICTS = ('DQ', 'CF', 'SE', 'SY')
 TOSOLVE_VERDICTS = ('NO', 'RJ', 'WA', 'PE', 'RT', 'TL', 'ML', 'SV', 'IG',
                     'CF', 'CE', 'WT', 'SM')
 
@@ -112,7 +113,7 @@ class Participant:
         for td in tr.find_all('td', {'class': 'verdict'}):
             ver = td['class'][1]
             if ver not in ALLOWED_VERDICTS:
-                raise Exception(f'WTF    verdict {ver}')
+                raise Exception(f'Oops! Unknown verdict "{ver}"')
             self.verdicts.append(ver)
             if ver in ('DQ', 'PR'):
                 num = 1
@@ -179,32 +180,34 @@ class Parser:
         return p
 
     def set_from_html(self, html):
-        self.html = html
-        soup = BeautifulSoup(self.html, 'html.parser')
+        soup = BeautifulSoup(html, 'html.parser')
         table = soup.find_all('table')[0]
         rows = table.find_all("tr")
 
         tds_contests = rows[0].find_all('td', {'class': 'contest'})
         tds_problem_names = rows[1].find_all('td', {'class': 'problem'})
 
-        self.contests = []
-        self.problems = []
+        contests = []
+        problems = []
         for td_contest in tds_contests:
-            self.contests.append(Contest(td_contest, len(self.problems),
-                                         tds_problem_names))
-            for i in range(self.contests[-1].n_probs):
-                self.problems.append(Problem(self.contests[-1],
-                                             len(self.problems)))
-        self.n_probs = len(self.problems)
-        self.n_conts = len(self.contests)
+            contests.append(Contest(td_contest, len(problems),
+                                    tds_problem_names))
+            for i in range(contests[-1].n_probs):
+                problems.append(Problem(contests[-1],
+                                        len(problems)))
 
-        self.participants = dict()
+        participants = dict()
         for par_ind in range(2, len(rows)):
             par = Participant(rows[par_ind])
-            self.participants[par.name] = par
-            for prob_id in range(self.n_probs):
-                self.problems[prob_id] += par.verdicts[prob_id]
-                self.problems[prob_id] += max(0, par.attempts[prob_id] - 1)
+            participants[par.name] = par
+            for prob_id in range(len(problems)):
+                problems[prob_id] += par.verdicts[prob_id]
+                problems[prob_id] += max(0, par.attempts[prob_id] - 1)
+
+        self.html = html
+        self.contests = contests
+        self.problems = problems
+        self.participants = participants
 
     def get_names(self):
         return list(self.participants.keys())
