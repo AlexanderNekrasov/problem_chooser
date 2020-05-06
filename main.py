@@ -41,6 +41,7 @@ class Ui_MainWindow(object):
         self.table.setObjectName("table")
         self.table.horizontalHeader().setSectionResizeMode(
             QtWidgets.QHeaderView.Stretch)
+        self.table.doubleClicked.connect(self.select_name)
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
         self.menubar.setGeometry(QtCore.QRect(0, 0, 528, 20))
@@ -126,6 +127,11 @@ ejudge, так что если server.179.ru недоступен, то обно
         global parser
         parser = Parser.from_server()
         parser.save_cache()
+
+    def select_name(self):
+        item = self.table.currentItem()
+        if item.text() in parser.get_names():
+            self.lineEdit.setText(item.text())
 
 
 if __name__ == "__main__":
