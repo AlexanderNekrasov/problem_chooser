@@ -15,7 +15,7 @@ OK_VERDICTS = ('OK', 'PR', 'PD')
 WA_VERDICTS = ('RJ', 'WA', 'PE', 'RT', 'TL', 'ML', 'SM')
 BAD_VERDICTS = ('DQ', 'CF', 'SE', 'SY')
 TOSOLVE_VERDICTS = ('NO', 'RJ', 'WA', 'PE', 'RT', 'TL', 'ML', 'SV', 'IG',
-                    'CF', 'CE', 'WT', 'SM')
+                    'CF', 'CE', 'WT', 'SM', 'SY', 'SK', 'SE', 'PT')
 
 
 class Contest:
