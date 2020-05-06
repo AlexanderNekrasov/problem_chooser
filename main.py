@@ -119,14 +119,23 @@ ejudge, так что если server.179.ru недоступен, то обно
 получиться. Но они сохраняются, так что при перезапуске программы все данные \
 останутся.
 Вручную обновить данные можно при нажатии Сtrl+R или в меню.
+
+Поддержать проект вы можете отправив любую сумму:
+- на телефон +79295917075 (мегафон).
+- на yandex.money 4100 1489 0105 922
 '''
         QtWidgets.QMessageBox.about(self.centralwidget, "Help",
                                     text_help)
 
     def reload_table(self):
         global parser
+        print('\nLoading...')
         parser = Parser.from_server()
+        print('Loaded')
         parser.save_cache()
+        print('Saved')
+        self.update_table()
+        print('Updated')
 
     def select_name(self):
         item = self.table.currentItem()
