@@ -98,6 +98,9 @@ class Ui_MainWindow(object):
                     [1, 1, 1],
                     map(str, [el.contest_id, el.short_name, el.score])
                 )
+        elif len(good_names) == 0:
+            self.table.appendRow(3, 'NOT FOUND')
+            self.table.item(0, 0).setTextAlignment(QtCore.Qt.AlignHCenter)
 
     def open_help(self):
         text_help = '''Problem Chooser for 22b class, school 179
