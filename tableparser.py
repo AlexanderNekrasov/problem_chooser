@@ -3,6 +3,7 @@ import re
 from bs4 import BeautifulSoup
 from copy import deepcopy
 import cachepath
+import gzip
 
 
 TABLE_URL = 'https://server.179.ru/shashkov/stand_b22.php'
@@ -181,15 +182,18 @@ class Parser:
         if not f.exists():
             raise Exception('Cache file is not exists')
         try:
-            rep = f.read_text(encoding='utf-8')
-            return eval(rep)
+            bts = gzip.decompress(f.read_bytes())
+            text = bts.decode(encoding='utf-8')
+            return eval(text)
         except Exception as ex:
             raise Exception('There are some problems with cache. Please '
                             'update the cache by get table from server.')
 
     def save_cache(self, location=CACHE_LOCATION):
         f = cachepath.CachePath(location)
-        f.write_text(repr(self))
+        text = repr(self)
+        bts = gzip.compress(bytes(text, encoding='utf-8'))
+        f.write_bytes(bts)
 
     @staticmethod
     def is_cache_exists(location=CACHE_LOCATION):
