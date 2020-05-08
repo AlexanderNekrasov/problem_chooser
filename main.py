@@ -1,6 +1,8 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 from RowSpanTableWidget import RowSpanTableWidget
+import threading
 from tableparser import Parser
+import time
 
 
 is_loaded = False
@@ -18,6 +20,22 @@ if not is_loaded:
     print('Loaded')
     is_loaded = True
     parser.save_cache()
+
+running = False
+
+
+def reload_table():
+    global running
+    print("Trying to reload")
+    if not running:
+        print("Reloading")
+        start = time.time()
+        running = True
+        parser = Parser.from_server()
+        parser.save_cache()
+        # ui.update_table()
+        print("Done", time.time() - start)
+        running = False
 
 
 class Ui_MainWindow(object):
@@ -76,6 +94,7 @@ class Ui_MainWindow(object):
                                                     "Input your name here"))
 
     def update_table(self):
+        print("UPD")
         name = self.lineEdit.text().lower()
         names = parser.get_names()
         self.table.clear()
@@ -131,14 +150,9 @@ ejudge, так что если server.179.ru недоступен, то обно
                                     text_help)
 
     def reload_table(self):
-        global parser
-        print('\nLoading...')
-        parser = Parser.from_server()
-        print('Loaded')
-        parser.save_cache()
-        print('Saved')
+        x = threading.Thread(target=reload_table)
+        x.start()
         self.update_table()
-        print('Updated')
 
     def select_name(self):
         item = self.table.currentItem()
