@@ -96,7 +96,7 @@ class Ui_MainWindow(object):
             for el in stat:
                 self.table.appendRow(
                     [1, 1, 1],
-                    map(str, [el.contest.id, el.short_name, el.score])
+                    map(str, [el.contest_id, el.short_name, el.score])
                 )
 
     def open_help(self):

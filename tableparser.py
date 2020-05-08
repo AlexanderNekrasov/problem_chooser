@@ -18,9 +18,26 @@ TOSOLVE_VERDICTS = ('NO', 'RJ', 'WA', 'PE', 'RT', 'TL', 'ML', 'SV', 'IG',
                     'CF', 'CE', 'WT', 'SM', 'SY', 'SK', 'SE', 'PT')
 
 
+def repr_class(self):
+    attrs = []
+    dct = vars(self)
+    for key in dct:
+        attrs.append(f'{key}={repr(dct[key])}')
+    return type(self).__name__ + '.from_repr(' + ','.join(attrs) + ')'
+
+
+def from_repr_class(cls, dct):
+    obj = cls()
+    for key in dct:
+        obj.__setattr__(key, dct[key])
+    return obj
+
+
 class Contest:
 
-    def __init__(self, td, first_prob_id=None, tds_prob_names=None):
+    def __init__(self, td=None, first_prob_id=None, tds_prob_names=None):
+        if td is None:
+            return
         title = td['title']
         self.id = int(re.match(r'#(\d+),.*', title).group(1))
         self.name = re.match(r'.*[^\d.](\d+\..*)', title).group(1)
@@ -32,10 +49,14 @@ class Contest:
         self.first_prob_id = first_prob_id
         self.prob_short_names = []
         self.prob_full_names = []
-        for prob_id in range(self.first_prob_id, self.first_prob_id +
-                             self.n_probs):
+        for prob_id in range(self.first_prob_id,
+                             self.first_prob_id + self.n_probs):
             self.prob_full_names.append(tds_prob_names[prob_id]['title'])
             self.prob_short_names.append(tds_prob_names[prob_id].text)
+
+    @classmethod
+    def from_repr(cls, **kwargs):
+        return from_repr_class(cls, kwargs)
 
     def prob_short_name(self, prob_id):
         return self.prob_short_names[prob_id - self.first_prob_id]
@@ -47,13 +68,16 @@ class Contest:
         return f'#{self.id}, {self.name}'
 
     def __repr__(self):
-        return self.__str__()
+        return repr_class(self)
 
 
 class Problem:
 
-    def __init__(self, contest, prob_id):
-        self.contest = contest
+    def __init__(self, contest_ind=None, prob_id=None, contest=None):
+        if contest is None:
+            return
+        self.contest_ind = contest_ind
+        self.contest_id = contest.id
         self.id = prob_id
         self.short_name = contest.prob_short_name(prob_id)
         self.full_name = contest.prob_full_name(prob_id)
@@ -69,21 +93,25 @@ class Problem:
         score = 2.0 * ok - 0.7 * wa - 1.0 * bad - 0.1 * invisible_attempts
         return round(score, 5)
 
+    @classmethod
+    def from_repr(cls, **kwargs):
+        return from_repr_class(cls, kwargs)
+
     def __lt__(self, other):
-        return (self.score, self.contest.id, self.id) < \
-               (other.score, other.contest.id, self.id)
+        return (self.score, self.contest_id, self.id) < \
+               (other.score, other.contest_id, self.id)
 
     def __le__(self, other):
-        return (self.score, self.contest.id, self.id) <= \
-               (other.score, other.contest.id, self.id)
+        return (self.score, self.contest_id, self.id) <= \
+               (other.score, other.contest_id, self.id)
 
     def __gt__(self, other):
-        return (self.score, self.contest.id, self.id) > \
-               (other.score, other.contest.id, self.id)
+        return (self.score, self.contest_id, self.id) > \
+               (other.score, other.contest_id, self.id)
 
     def __ge__(self, other):
-        return (self.score, self.contest.id, self.id) >= \
-               (other.score, other.contest.id, self.id)
+        return (self.score, self.contest_id, self.id) >= \
+               (other.score, other.contest_id, self.id)
 
     def __iadd__(self, verdict):
         if isinstance(verdict, int):
@@ -94,15 +122,17 @@ class Problem:
         return self
 
     def __str__(self):
-        return f'{self.score} ---  {self.short_name}  ---  {self.contest}'
+        return f'{self.score} ---  {self.short_name}  ---  #{self.contest_id}'
 
     def __repr__(self):
-        return self.__str__()
+        return repr_class(self)
 
 
 class Participant:
 
-    def __init__(self, tr):
+    def __init__(self, tr=None):
+        if tr is None:
+            return
         self.id = tr.find('td', {'class': 'rank'}).text
         self.all_name = tr.find('td', {'class': 'name'}).text
         self.name = re.match(r'\w+? (.*)', self.all_name).group(1)
@@ -131,10 +161,17 @@ class Participant:
                 res.append(prob_id)
         return res
 
+    @classmethod
+    def from_repr(cls, **kwargs):
+        return from_repr_class(cls, kwargs)
+
+    def __repr__(self):
+        return repr_class(self)
+
 
 class Parser:
 
-    def __init__(self, first_contest, last_contest):
+    def __init__(self, first_contest=None, last_contest=None):
         self.first_contest = first_contest
         self.last_contest = last_contest
 
@@ -144,20 +181,15 @@ class Parser:
         if not f.exists():
             raise Exception('Cache file is not exists')
         try:
-            text = f.read_text(encoding='utf-8')
-            mtch = re.match(r'(\d+) (\d+)\n', text, re.UNICODE)
-            p = Parser(mtch.group(1), mtch.group(2))
-            html = text[len(mtch.group(0)):]
-            p.set_from_html(html)
-            return p
+            rep = f.read_text(encoding='utf-8')
+            return eval(rep)
         except Exception as ex:
             raise Exception('There are some problems with cache. Please '
                             'update the cache by get table from server.')
 
     def save_cache(self, location=CACHE_LOCATION):
         f = cachepath.CachePath(location)
-        f.write_text(str(self.first_contest) + ' ' + str(self.last_contest) +
-                     '\n' + self.html)
+        f.write_text(repr(self))
 
     @staticmethod
     def is_cache_exists(location=CACHE_LOCATION):
@@ -193,8 +225,8 @@ class Parser:
             contests.append(Contest(td_contest, len(problems),
                                     tds_problem_names))
             for i in range(contests[-1].n_probs):
-                problems.append(Problem(contests[-1],
-                                        len(problems)))
+                problems.append(
+                    Problem(len(contests) - 1, len(problems), contests[-1]))
 
         participants = dict()
         for par_ind in range(2, len(rows)):
@@ -204,7 +236,6 @@ class Parser:
                 problems[prob_id] += par.verdicts[prob_id]
                 problems[prob_id] += max(0, par.attempts[prob_id] - 1)
 
-        self.html = html
         self.contests = contests
         self.problems = problems
         self.participants = participants
@@ -223,3 +254,10 @@ class Parser:
     def get_table_html(first_contest=690, last_contest=5000):
         url = f'{TABLE_URL}?from={first_contest}&to={last_contest}'
         return requests.get(url).text
+
+    @classmethod
+    def from_repr(cls, **kwargs):
+        return from_repr_class(cls, kwargs)
+
+    def __repr__(self):
+        return repr_class(self)
