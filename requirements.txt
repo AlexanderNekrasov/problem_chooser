@@ -2,3 +2,4 @@ requests>=2.23.0
 beautifulsoup4>=4.9.0
 PyQt5>=5.14.2
 cachepath>=1.1.1
+PyInstaller>=3.6

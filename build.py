@@ -20,11 +20,11 @@ def try_import(lib, piplib=None):
         exit(0)
 
 
-require(['PyInstaller>=3.6'])
+
 require(open('requirements.txt').read().strip().split('\n'))
 
 shutil.rmtree(NAME, ignore_errors=True)
-os.system(sys.executable + ' -m PyInstaller -F main.py --clean')
+os.system(sys.executable + ' -m PyInstaller -F main.py --clean --noconsole')
 shutil.rmtree('build')
 os.remove('main.spec')
 shutil.move('dist', NAME)
