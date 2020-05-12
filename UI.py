@@ -1,10 +1,29 @@
-from PyQt5 import QtCore, QtWidgets
+from PyQt5 import QtCore, QtWidgets, QtGui
 from RowSpanTableWidget import RowSpanTableWidget
 from Parser import Parser
 from Worker import Worker
+import cfg
 
 
 parser = Parser()
+
+
+def initParser():
+    global parser
+    is_loaded = False
+    if Parser.is_cache_exists():
+        try:
+            print('Loading from cache...')
+            parser = Parser.from_cache()
+            print('Loaded')
+            is_loaded = True
+        except Exception as ex:
+            print(ex)
+    if not is_loaded:
+        print('Loading from server...')
+        parser = Parser.from_server()
+        print('Loaded')
+        parser.save_cache()
 
 
 def reload_table():
@@ -13,67 +32,76 @@ def reload_table():
     parser.save_cache()
 
 
-class Ui_MainWindow:
+class Ui_MainWindow(QtWidgets.QMainWindow):
 
-    def setupUi(self, MainWindow):
-        MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(600, 800)
+    def __init__(self):
+        super().__init__()
+        self.setupUi()
 
-        self.centralwidget = QtWidgets.QWidget(MainWindow)
-        self.label = QtWidgets.QLabel(self.centralwidget)
+    def setupUi(self):
+        self.setWindowTitle("Problem Chooser v" + cfg.VERSION)
+
+        self.resize(600, 800)
+
+        font = QtGui.QFont()
+        font.setPixelSize(16)
+        font.setStyleHint(QtGui.QFont.Monospace)
+        self.setFont(font)
+
+        self.centralwidget = QtWidgets.QWidget(self)
+        self.setCentralWidget(self.centralwidget)
+
+        self.headerLabel = QtWidgets.QLabel(self.centralwidget)
+        self.headerLabel.setText("Find easiest problems for you")
 
         self.reloadButton = QtWidgets.QPushButton("Reload")
         self.reloadButton.clicked.connect(self.reload_table)
 
         self.header = QtWidgets.QHBoxLayout()
-        self.header.addWidget(self.label, stretch=1)
-        self.header.addWidget(self.reloadButton)
+        self.header.addWidget(self.headerLabel, stretch=5)
+        self.header.addWidget(self.reloadButton, stretch=1)
 
         self.lineEdit = QtWidgets.QLineEdit()
         self.lineEdit.textChanged.connect(self.update_table)
+        self.lineEdit.setPlaceholderText("Input your name here")
 
         self.table = RowSpanTableWidget(3)
         self.table.doubleClicked.connect(self.select_name)
 
         self.main_layout = QtWidgets.QVBoxLayout(self.centralwidget)
         self.main_layout.addLayout(self.header)
+        self.main_layout.addSpacing(10)
         self.main_layout.addWidget(self.lineEdit)
         self.main_layout.addWidget(self.table)
 
-        MainWindow.setCentralWidget(self.centralwidget)
-        self.menubar = QtWidgets.QMenuBar(MainWindow)
-        MainWindow.setMenuBar(self.menubar)
+        self.menubar = QtWidgets.QMenuBar(self)
+        self.setMenuBar(self.menubar)
 
-        self.reloadButton = QtWidgets.QAction("Reload (~5 sec)")
-        self.reloadButton.setShortcut("Ctrl+R")
-        self.reloadButton.triggered.connect(self.reload_table)
+        self.reloadSubmenu = QtWidgets.QAction("Reload (~5 sec)")
+        self.reloadSubmenu.setShortcut("Ctrl+R")
+        self.reloadSubmenu.triggered.connect(self.reload_table)
 
         self.tableMenu = self.menubar.addMenu("&Table")
-        self.tableMenu.addAction(self.reloadButton)
+        self.tableMenu.addAction(self.reloadSubmenu)
 
-        self.helpButton = QtWidgets.QAction("Help")
-        self.helpButton.setShortcut("Ctrl+H")
-        self.helpButton.triggered.connect(self.open_help)
+        self.helpSubmenu = QtWidgets.QAction("Help")
+        self.helpSubmenu.setShortcut("Ctrl+H")
+        self.helpSubmenu.triggered.connect(self.open_help)
 
-        self.fileMenu = self.menubar.addMenu("&Help")
-        self.fileMenu.addAction(self.helpButton)
+        self.helpMenu = self.menubar.addMenu("&Help")
+        self.helpMenu.addAction(self.helpSubmenu)
 
-        self.statusbar = QtWidgets.QStatusBar(MainWindow)
-        MainWindow.setStatusBar(self.statusbar)
-        self.retranslateUi(MainWindow)
-        self.threadPool = QtCore.QThreadPool()
-        self.reloading = False
+        self.statusbar = QtWidgets.QStatusBar(self)
+        self.statusbarLabel = QtWidgets.QLabel()
+        self.statusbar.addWidget(self.statusbarLabel)
+        self.setStatusBar(self.statusbar)
         self.set_last_reload_time()
-        self.update_table()
 
-    def retranslateUi(self, MainWindow):
-        _translate = QtCore.QCoreApplication.translate
-        MainWindow.setWindowTitle(_translate("MainWindow",
-                                             "Problem Chooser v1.79"))
-        self.label.setText(_translate("MainWindow",
-                                      "Find easiest problems for you"))
-        self.lineEdit.setPlaceholderText(_translate("MainWindow",
-                                                    "Input your name here"))
+        self.threadPool = QtCore.QThreadPool()
+        self.reloadWorker = Worker(self.threadPool, reload_table)
+        self.reloadWorker.signals.finished.connect(self.on_reload_finished)
+
+        self.update_table()
 
     def update_table(self):
         name = self.lineEdit.text().lower()
@@ -131,25 +159,25 @@ ejudge, так что если server.179.ru недоступен, то обно
                                     text_help)
 
     def set_last_reload_time(self):
+        self.statusbarLabel.setText(self.get_last_reload_time())
+
+    def get_last_reload_time(self):
         if parser.last_reload_time is None:
-            self.statusbar.showMessage("Last reload: undefined")
+            return " Last reload: undefined"
         else:
             strtime = parser.last_reload_time.strftime('%x %X')
-            self.statusbar.showMessage("Last reload: " + strtime)
+            return " Last reload: " + strtime
 
     def on_reload_finished(self):
+        self.statusbarLabel.setText(self.get_last_reload_time())
         self.set_last_reload_time()
         self.update_table()
-        self.reloading = False
 
     def reload_table(self):
-        if self.reloading:
+        if self.reloadWorker.is_running:
             return
-        self.reloading = True
-        self.statusbar.showMessage("Reloading...")
-        worker = Worker(self.threadPool, reload_table)
-        worker.signals.finished.connect(self.on_reload_finished)
-        self.threadPool.start(worker)
+        self.statusbarLabel.setText(" Reloading...")
+        self.reloadWorker.start()
 
     def select_name(self):
         item = self.table.currentItem()
