@@ -3,8 +3,9 @@ import os
 import shutil
 import zipfile
 from pkg_resources import require
+import cfg
 
-NAME = 'problem-chooser-v1.79'
+NAME = 'problem-chooser-v' + cfg.VERSION
 
 
 def try_import(lib, piplib=None):
