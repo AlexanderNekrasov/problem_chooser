@@ -36,7 +36,6 @@ class Worker(QtCore.QRunnable):
         self.is_running = True
         try:
             self.result = self.function(*self.args, **self.kwargs)
-
         except Exception as ex:
             self.error = (ex, traceback.format_exc())
             self.signals.error.emit(self.error)

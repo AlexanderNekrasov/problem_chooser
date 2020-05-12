@@ -208,10 +208,10 @@ class Parser:
     @staticmethod
     def from_server(first_contest=690, last_contest=5000):
         try:
-            html = Parser.get_table_html(first_contest, last_contest)
             p = Parser(first_contest, last_contest)
-            p.set_from_html(html)
             p.last_reload_time = datetime.datetime.now()
+            html = Parser.get_table_html(first_contest, last_contest)
+            p.set_from_html(html)
         except Exception:
             raise Exception('There are some problems with server. Please '
                             'check the server is up or you Internet '
