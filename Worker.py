@@ -9,8 +9,7 @@ def EMPTY_F(*args, **kwargs):
 class Worker(QtCore.QRunnable):
 
     def __init__(self, threadpool, function, finished_f=EMPTY_F,
-                 error_f=EMPTY_F, result_f=EMPTY_F, progress_f=EMPTY_F,
-                 worker_info=None):
+                 error_f=EMPTY_F, result_f=EMPTY_F, worker_info=None):
         self.threadpool = threadpool
         self.function = function
         self.args = list()
@@ -18,7 +17,6 @@ class Worker(QtCore.QRunnable):
         self.finished_f = finished_f
         self.error_f = error_f
         self.result_f = result_f
-        self.progress_f = progress_f
         self.worker_info = worker_info
         self.result = None
         self.error = None
@@ -30,8 +28,6 @@ class Worker(QtCore.QRunnable):
     def set_args(self, *args, **kwargs):
         self.args = args
         self.kwargs = kwargs
-        if self.progress_f != EMPTY_F:
-            self.kwargs['worker_progress_callback'] = self.progress_f
 
     def reset(self):
         super().__init__()
