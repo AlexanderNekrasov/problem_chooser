@@ -84,7 +84,6 @@ class Ui_MainWindow(object):
                                                     "Input your name here"))
 
     def update_table(self):
-        print("UPD")
         name = self.lineEdit.text().lower()
         names = parser.get_names()
         self.table.clear()
