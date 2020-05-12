@@ -4,6 +4,7 @@ from bs4 import BeautifulSoup
 from copy import deepcopy
 import cachepath
 import gzip
+import datetime
 
 
 TABLE_URL = 'https://server.179.ru/shashkov/stand_b22.php'
@@ -175,6 +176,7 @@ class Parser:
     def __init__(self, first_contest=None, last_contest=None):
         self.first_contest = first_contest
         self.last_contest = last_contest
+        self.last_reload_time = None
 
     @staticmethod
     def from_cache(location=CACHE_LOCATION):
@@ -209,6 +211,7 @@ class Parser:
             html = Parser.get_table_html(first_contest, last_contest)
             p = Parser(first_contest, last_contest)
             p.set_from_html(html)
+            p.last_reload_time = datetime.datetime.now()
         except Exception:
             raise Exception('There are some problems with server. Please '
                             'check the server is up or you Internet '
