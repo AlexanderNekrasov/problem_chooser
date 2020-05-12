@@ -1,9 +1,7 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 from RowSpanTableWidget import RowSpanTableWidget
-import threading
 from tableparser import Parser
-import time
-
+from Worker import Worker
 
 is_loaded = False
 if Parser.is_cache_exists():
@@ -21,21 +19,11 @@ if not is_loaded:
     is_loaded = True
     parser.save_cache()
 
-running = False
-
 
 def reload_table():
-    global running
-    print("Trying to reload")
-    if not running:
-        print("Reloading")
-        start = time.time()
-        running = True
-        parser = Parser.from_server()
-        parser.save_cache()
-        # ui.update_table()
-        print("Done", time.time() - start)
-        running = False
+    global parser
+    parser = Parser.from_server()
+    parser.save_cache()
 
 
 class Ui_MainWindow(object):
@@ -82,6 +70,8 @@ class Ui_MainWindow(object):
         MainWindow.setStatusBar(self.statusbar)
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
+        self.threadPool = QtCore.QThreadPool()
+        self.reloading = False
         self.update_table()
 
     def retranslateUi(self, MainWindow):
@@ -149,10 +139,19 @@ ejudge, так что если server.179.ru недоступен, то обно
         QtWidgets.QMessageBox.about(self.centralwidget, "Help",
                                     text_help)
 
-    def reload_table(self):
-        x = threading.Thread(target=reload_table)
-        x.start()
+    def on_reload_finished(self):
+        self.statusbar.showMessage("")
         self.update_table()
+        self.reloading = False
+
+    def reload_table(self):
+        if self.reloading:
+            return
+        self.reloading = True
+        self.statusbar.showMessage("Reloading...")
+        worker = Worker(self.threadPool, reload_table)
+        worker.signals.finished.connect(self.on_reload_finished)
+        self.threadPool.start(worker)
 
     def select_name(self):
         item = self.table.currentItem()
@@ -162,6 +161,7 @@ ejudge, так что если server.179.ru недоступен, то обно
 
 if __name__ == "__main__":
     import sys
+
     font = QtGui.QFont()
     font.setPixelSize(16)
     font.setStyleHint(QtGui.QFont.Monospace)

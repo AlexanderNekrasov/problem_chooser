@@ -2,27 +2,25 @@ import traceback
 from PyQt5 import QtCore
 
 
-def EMPTY_F(*args, **kwargs):
-    pass
+class WorkerSignals(QtCore.QObject):
+    finished = QtCore.pyqtSignal()
+    error = QtCore.pyqtSignal(tuple)
 
 
 class Worker(QtCore.QRunnable):
 
-    def __init__(self, threadpool, function, finished_f=EMPTY_F,
-                 error_f=EMPTY_F, result_f=EMPTY_F, worker_info=None):
+    def __init__(self, threadpool, function):
+        super(Worker, self).__init__()
         self.threadpool = threadpool
         self.function = function
         self.args = list()
         self.kwargs = dict()
-        self.finished_f = finished_f
-        self.error_f = error_f
-        self.result_f = result_f
-        self.worker_info = worker_info
         self.result = None
         self.error = None
         self.cnt_start = 0
         self.is_started = False
         self.is_running = False
+        self.signals = WorkerSignals()
         self.reset()
 
     def set_args(self, *args, **kwargs):
@@ -37,15 +35,13 @@ class Worker(QtCore.QRunnable):
     def run(self):
         self.is_running = True
         try:
-            self.result = self.function(*self.args, **self.kwargs,
-                                        worker_info=self.worker_info)
+            self.result = self.function(*self.args, **self.kwargs)
+
         except Exception as ex:
             self.error = (ex, traceback.format_exc())
-            self.error_f(self.error, worker_info=self.worker_info)
-        else:
-            self.result_f(self.result, worker_info=self.worker_info)
+            self.signals.error.emit(self.error)
         finally:
-            self.finished_f(worker_info=self.worker_info)
+            self.signals.finished.emit()
         self.is_running = False
 
     def start(self):
