@@ -13,50 +13,54 @@ def reload_table():
     parser.save_cache()
 
 
-class Ui_MainWindow(object):
+class Ui_MainWindow:
 
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(528, 604)
+        MainWindow.resize(600, 800)
+
         self.centralwidget = QtWidgets.QWidget(MainWindow)
-        self.centralwidget.setObjectName("centralwidget")
         self.label = QtWidgets.QLabel(self.centralwidget)
-        self.label.setGeometry(QtCore.QRect(20, 10, 461, 20))
-        self.label.setMinimumSize(QtCore.QSize(57, 0))
-        self.label.setObjectName("label")
-        self.lineEdit = QtWidgets.QLineEdit(self.centralwidget)
-        self.lineEdit.setGeometry(QtCore.QRect(20, 40, 481, 23))
-        self.lineEdit.setInputMask("")
-        self.lineEdit.setObjectName("lineEdit")
+
+        self.reloadButton = QtWidgets.QPushButton("Reload")
+        self.reloadButton.clicked.connect(self.reload_table)
+
+        self.header = QtWidgets.QHBoxLayout()
+        self.header.addWidget(self.label, stretch=1)
+        self.header.addWidget(self.reloadButton)
+
+        self.lineEdit = QtWidgets.QLineEdit()
         self.lineEdit.textChanged.connect(self.update_table)
-        self.table = RowSpanTableWidget(3, self.centralwidget)
-        self.table.setGeometry(QtCore.QRect(20, 80, 481, 481))
-        self.table.setObjectName("table")
-        self.table.horizontalHeader().setSectionResizeMode(
-            QtWidgets.QHeaderView.Stretch)
+
+        self.table = RowSpanTableWidget(3)
         self.table.doubleClicked.connect(self.select_name)
+
+        self.main_layout = QtWidgets.QVBoxLayout(self.centralwidget)
+        self.main_layout.addLayout(self.header)
+        self.main_layout.addWidget(self.lineEdit)
+        self.main_layout.addWidget(self.table)
+
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 528, 20))
-        self.menubar.setObjectName("menubar")
         MainWindow.setMenuBar(self.menubar)
+
         self.reloadButton = QtWidgets.QAction("Reload (~5 sec)")
         self.reloadButton.setShortcut("Ctrl+R")
-        self.reloadButton.setStatusTip("Reload Table")
         self.reloadButton.triggered.connect(self.reload_table)
+
         self.tableMenu = self.menubar.addMenu("&Table")
         self.tableMenu.addAction(self.reloadButton)
+
         self.helpButton = QtWidgets.QAction("Help")
         self.helpButton.setShortcut("Ctrl+H")
-        self.helpButton.setStatusTip("Open help")
         self.helpButton.triggered.connect(self.open_help)
+
         self.fileMenu = self.menubar.addMenu("&Help")
         self.fileMenu.addAction(self.helpButton)
+
         self.statusbar = QtWidgets.QStatusBar(MainWindow)
-        self.statusbar.setObjectName("statusbar")
         MainWindow.setStatusBar(self.statusbar)
         self.retranslateUi(MainWindow)
-        QtCore.QMetaObject.connectSlotsByName(MainWindow)
         self.threadPool = QtCore.QThreadPool()
         self.reloading = False
         self.set_last_reload_time()
@@ -65,7 +69,7 @@ class Ui_MainWindow(object):
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow",
-                                             "Problem Chooser v1.0"))
+                                             "Problem Chooser v1.79"))
         self.label.setText(_translate("MainWindow",
                                       "Find easiest problems for you"))
         self.lineEdit.setPlaceholderText(_translate("MainWindow",
@@ -128,9 +132,9 @@ ejudge, так что если server.179.ru недоступен, то обно
 
     def set_last_reload_time(self):
         if parser.last_reload_time is None:
-            self.statusbar.showMessage("")
+            self.statusbar.showMessage("Last reload: undefined")
         else:
-            strtime = parser.last_reload_time.strftime('%a %d.%m.%Y %X')
+            strtime = parser.last_reload_time.strftime('%x %X')
             self.statusbar.showMessage("Last reload: " + strtime)
 
     def on_reload_finished(self):

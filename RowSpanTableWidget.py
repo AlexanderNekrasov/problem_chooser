@@ -9,6 +9,8 @@ class RowSpanTableWidget(QtWidgets.QTableWidget):
         self.setColumnCount(maxColumnCount)
         self.horizontalHeader().setVisible(False)
         self.verticalHeader().setVisible(False)
+        self.horizontalHeader().setSectionResizeMode(
+            QtWidgets.QHeaderView.Stretch)
 
     def _fix_spans_and_texts(self, spans_, texts_):
         if not isinstance(spans_, Iterable):
