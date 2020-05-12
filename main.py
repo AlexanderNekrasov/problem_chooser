@@ -2,7 +2,9 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from RowSpanTableWidget import RowSpanTableWidget
 from tableparser import Parser
 from Worker import Worker
+import datetime
 
+last_reload = None
 is_loaded = False
 if Parser.is_cache_exists():
     try:
@@ -22,6 +24,8 @@ if not is_loaded:
 
 def reload_table():
     global parser
+    global last_reload
+    last_reload = datetime.datetime.now()
     parser = Parser.from_server()
     parser.save_cache()
 
@@ -138,8 +142,14 @@ ejudge, так что если server.179.ru недоступен, то обно
         QtWidgets.QMessageBox.about(self.centralwidget, "Help",
                                     text_help)
 
+    def set_last_reload(self):
+        if last_reload is None:
+            self.statusbar.showMessage("")
+        else:
+            self.statusbar.showMessage("Last reload: " + str(last_reload))
+
     def on_reload_finished(self):
-        self.statusbar.showMessage("")
+        self.set_last_reload()
         self.update_table()
         self.reloading = False
 
