@@ -36,11 +36,11 @@ class MainPageParser:
 
     def get_problems_url_by_id(self, contest_id):
         self.load_thread.join()
-        return self.problem_url[contest_id]
+        return self.problem_url.get(contest_id, None)
 
     def get_contest_url_by_id(self, contest_id):
         self.load_thread.join()
-        return self.contest_url[contest_id]
+        return self.contest_url.get(contest_id, None)
 
 
 if __name__ == "__main__":

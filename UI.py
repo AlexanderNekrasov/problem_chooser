@@ -1,34 +1,37 @@
 from PyQt5 import QtCore, QtWidgets, QtGui
 from RowSpanTableWidget import RowSpanTableWidget
 from TableParser import TableParser
+from MainPageParser import MainPageParser
 from Worker import Worker
+import webbrowser
 import cfg
 
-parser = TableParser()
+tableParser = TableParser()
+mainPageParser = MainPageParser()
 
 
 def initTableParser():
-    global parser
+    global tableParser
     is_loaded = False
     if TableParser.is_cache_exists():
         try:
             print('Loading from cache...')
-            parser = TableParser.from_cache()
+            tableParser = TableParser.from_cache()
             print('Loaded')
             is_loaded = True
         except Exception as ex:
             print(ex)
     if not is_loaded:
         print('Loading from server...')
-        parser = TableParser.from_server()
+        tableParser = TableParser.from_server()
         print('Loaded')
-        parser.save_cache()
+        tableParser.save_cache()
 
 
 def reload_table():
-    global parser
-    parser = TableParser.from_server()
-    parser.save_cache()
+    global tableParser
+    tableParser = TableParser.from_server()
+    tableParser.save_cache()
 
 
 class Ui_MainWindow(QtWidgets.QMainWindow):
@@ -65,7 +68,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.lineEdit.setPlaceholderText("Input your name here")
 
         self.table = RowSpanTableWidget(3)
-        self.table.doubleClicked.connect(self.select_name)
+        self.table.doubleClicked.connect(self.double_clicked)
 
         self.main_layout = QtWidgets.QVBoxLayout(self.centralwidget)
         self.main_layout.addLayout(self.header)
@@ -104,7 +107,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
 
     def update_table(self):
         name = self.lineEdit.text().lower()
-        names = parser.get_names()
+        names = tableParser.get_names()
         self.table.clear()
         good_names = []
         for el in names:
@@ -118,7 +121,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
                     self.table.appendRow([3], el)
         if len(good_names) == 1:
             name = good_names[0]
-            stat = parser.get_stat(name)
+            stat = tableParser.get_stat(name)
             self.table.appendRow([1, 1, 1], ["Contest id", "Problem", "Score"])
             for el in stat:
                 self.table.appendRow(
@@ -169,10 +172,10 @@ ejudge, так что если server.179.ru недоступен, то обно
         self.statusbarLabel.setText(self.get_last_reload_time())
 
     def get_last_reload_time(self):
-        if parser.last_reload_time is None:
+        if tableParser.last_reload_time is None:
             return " Last reload: undefined"
         else:
-            strtime = parser.last_reload_time.strftime('%x %X')
+            strtime = tableParser.last_reload_time.strftime('%x %X')
             return " Last reload: " + strtime
 
     def on_reload_finished(self):
@@ -186,7 +189,27 @@ ejudge, так что если server.179.ru недоступен, то обно
         self.statusbarLabel.setText(" Reloading...")
         self.reloadWorker.start()
 
-    def select_name(self):
+    def double_clicked(self):
         item = self.table.currentItem()
-        if item.text() in parser.get_names():
+        if item.text() in tableParser.get_names():
             self.lineEdit.setText(item.text())
+        elif item.column() == 0:
+            url = mainPageParser.get_problems_url_by_id(item.text())
+            if url is not None:
+                webbrowser.open(url)
+            url = mainPageParser.get_contest_url_by_id(item.text())
+            if url is not None:
+                webbrowser.open(url)
+        elif item.column() == 1:
+            url = mainPageParser.get_problems_url_by_id(
+                self.table.item(item.row(), 0).text()
+                   ) + \
+                  "#prob_" + \
+                  item.text()
+            if url is not None:
+                webbrowser.open(url)
+            url = mainPageParser.get_contest_url_by_id(
+                self.table.item(item.row(), 0).text()
+                   )
+            if url is not None:
+                webbrowser.open(url)
