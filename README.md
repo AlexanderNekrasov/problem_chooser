@@ -4,13 +4,18 @@
 
 ## Как установить
 
-Скачайте [архив](https://github.com/AlexanderNekrasov/problem_chooser/archive/master.zip "Скачать") или склонируйте репозиторий:
-```shell
-git clone https://github.com/AlexanderNekrasov/problem_chooser.git
-```
-В директории проекта запустите `build.py`.
+##### Windows и Linux:
+Скачайте [отсюда](https://github.com/AlexanderNekrasov/problem_chooser/releases/tag/v1.79) файл `problem-chooser-OS` для своей операционной системы.
+Запустите этот файл. Готово!
 
-После этого появиться директория `problem-chooser-v1.79/`, в которой находиться исполняемый файл. Готово! Вы можете премещать этот файл куда угодно — при его запуске программа будет работать!
+##### Mac OS:
+
+Скачайте [отсюда](https://github.com/AlexanderNekrasov/problem_chooser/releases/tag/v1.79) архив `problem-chooser-src.zip` и разархивируйте его.
+Зайдите в терминал и перейдите в директорию проекта. Исполните команду:
+```shell
+python3 -m pip install requests>=2.23.0 beautifulsoup4>=4.9.0 PyQt5>=5.14.2 cachepath>=1.1.1
+```
+Если всё завершилось успешно, то при запуске `main.py` у вас будет запускаться программа.
 
 ## Как пользоваться
 В специальном поле можно ввести своё имя, и вам будет предложен список нерешённых задач в порядке возрастания сложности.
@@ -21,9 +26,9 @@ Score - оценка простоты задач. Чем больше оценк
 
 ## Как поддержать проект
 Если вы обнаружили неисправность или хотите новую функциональность, *обязательно* напишите разработчикам:
- * telegram [@crazyilian](https://trussian.ru/crazyilian "Открыть чат @crazyilian")
- * telegram [@AlexNekrasov01](https://trussian.ru/AlexNekrasov01 "Открыть чат @AlexNekrasov01")
- * vk [@crazyilian](https://vk.com/im?sel=240253698 "Открыть чат @crazyilian")
+ * telegram: [@crazyilian](https://trussian.ru/crazyilian "Открыть чат @crazyilian")
+ * telegram: [@AlexNekrasov01](https://trussian.ru/AlexNekrasov01 "Открыть чат @AlexNekrasov01")
+ * vk: [@crazyilian](https://vk.com/im?sel=240253698 "Открыть чат @crazyilian")
 
 Также поддержать проект вы можете отправив любую сумму:
  * на телефон +79295917075 (мегафон).

@@ -2,7 +2,7 @@ import sys
 import os
 import shutil
 import zipfile
-from pkg_resources import require
+from pkg_resources import require, DistributionNotFound, VersionConflict
 import cfg
 
 args = sys.argv[1:]
@@ -15,7 +15,17 @@ if not NOT_INSTALL_REQUIRMENTS:
     print("Installing requirements.txt")
     os.system(sys.executable + " -m pip install -r requirements.txt")
 
-require(open('requirements.txt').read().strip().split('\n'))
+try:
+    require(open('requirements.txt').read().strip().split('\n'))
+except (DistributionNotFound, VersionConflict) as ex:
+    print('Check requirements failed:')
+    print(' ', ex)
+    print('Try again')
+    exit(0)
+except Exception as ex:
+    print('Some errors found:\n')
+    raise ex
+
 
 shutil.rmtree(NAME, ignore_errors=True)
 print("\nBUILDING...")
