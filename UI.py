@@ -203,10 +203,9 @@ ejudge, так что если server.179.ru недоступен, то обно
         elif item.column() == 1:
             url = mainPageParser.get_problems_url_by_id(
                 self.table.item(item.row(), 0).text()
-                   ) + \
-                  "#prob_" + \
-                  item.text()
+                   )
             if url is not None:
+                url += "#prob_" + item.text()
                 webbrowser.open(url)
             url = mainPageParser.get_contest_url_by_id(
                 self.table.item(item.row(), 0).text()
