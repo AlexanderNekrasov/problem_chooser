@@ -1,33 +1,33 @@
 from PyQt5 import QtCore, QtWidgets, QtGui
 from RowSpanTableWidget import RowSpanTableWidget
-from Parser import Parser
+from TableParser import TableParser
 from Worker import Worker
 import cfg
 
-parser = Parser()
+parser = TableParser()
 
 
-def initParser():
+def initTableParser():
     global parser
     is_loaded = False
-    if Parser.is_cache_exists():
+    if TableParser.is_cache_exists():
         try:
             print('Loading from cache...')
-            parser = Parser.from_cache()
+            parser = TableParser.from_cache()
             print('Loaded')
             is_loaded = True
         except Exception as ex:
             print(ex)
     if not is_loaded:
         print('Loading from server...')
-        parser = Parser.from_server()
+        parser = TableParser.from_server()
         print('Loaded')
         parser.save_cache()
 
 
 def reload_table():
     global parser
-    parser = Parser.from_server()
+    parser = TableParser.from_server()
     parser.save_cache()
 
 

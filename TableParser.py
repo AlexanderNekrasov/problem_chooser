@@ -171,7 +171,7 @@ class Participant:
         return repr_class(self)
 
 
-class Parser:
+class TableParser:
 
     def __init__(self, first_contest=None, last_contest=None):
         self.first_contest = first_contest
@@ -208,9 +208,9 @@ class Parser:
     @staticmethod
     def from_server(first_contest=690, last_contest=5000):
         try:
-            p = Parser(first_contest, last_contest)
+            p = TableParser(first_contest, last_contest)
             p.last_reload_time = datetime.datetime.now()
-            html = Parser.get_table_html(first_contest, last_contest)
+            html = TableParser.get_table_html(first_contest, last_contest)
             p.set_from_html(html)
         except Exception:
             raise Exception('There are some problems with server. Please '
