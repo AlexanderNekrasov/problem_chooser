@@ -7,11 +7,11 @@ import cfg
 
 args = sys.argv[1:]
 MAKE_ZIP = '--make-zip' in args
-INSTALL_REQUIRMENTS = '--install-reqs' in args
+NOT_INSTALL_REQUIRMENTS = '--not-install-reqs' in args
 
 NAME = 'problem-chooser-v' + cfg.VERSION
 
-if INSTALL_REQUIRMENTS:
+if not NOT_INSTALL_REQUIRMENTS:
     print("Installing requirements.txt")
     os.system(sys.executable + " -m pip install -r requirements.txt")
 
@@ -26,7 +26,11 @@ if exit_code:
     sys.exit(exit_code)
 shutil.rmtree('build')
 os.remove('main.spec')
-os.rename(os.path.join('dist', 'main'), os.path.join('dist', 'prolem-chooser'))
+
+filename = os.listdir('dist')[0]
+newfilename = filename.replace('main', 'problem-chooser')
+
+os.rename(os.path.join('dist', filename), os.path.join('dist', newfilename))
 shutil.move('dist', NAME)
 
 if MAKE_ZIP:
