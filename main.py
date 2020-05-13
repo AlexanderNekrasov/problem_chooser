@@ -2,7 +2,7 @@ import UI
 from PyQt5 import QtWidgets
 
 
-UI.initParser()
+UI.initTableParser()
 
 if __name__ == "__main__":
     import sys
