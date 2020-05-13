@@ -51,7 +51,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.setCentralWidget(self.centralwidget)
 
         self.headerLabel = QtWidgets.QLabel(self.centralwidget)
-        self.headerLabel.setText("Find easiest problems for you")
+        self.headerLabel.setText("Find the easiest problems for you")
 
         self.reloadButton = QtWidgets.QPushButton("Reload")
         self.reloadButton.clicked.connect(self.reload_table)
