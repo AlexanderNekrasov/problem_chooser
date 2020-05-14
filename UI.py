@@ -193,22 +193,21 @@ ejudge, так что если server.179.ru недоступен, то обно
         item = self.table.currentItem()
         if item.text() in tableParser.get_names():
             self.lineEdit.setText(item.text())
-        elif item.column() == 0:
-            url = mainPageParser.get_problems_url_by_id(item.text())
-            if url is not None:
-                webbrowser.open(url)
-            url = mainPageParser.get_contest_url_by_id(item.text())
+            return
+        cells = [self.table.item(item.row(), col) for col in range(3)]
+        print(cells)
+        if item.column() == 0:
+            url = mainPageParser.get_contest_url_by_id(cells[0].text())
             if url is not None:
                 webbrowser.open(url)
         elif item.column() == 1:
-            url = mainPageParser.get_problems_url_by_id(
-                self.table.item(item.row(), 0).text()
-                   )
+            print('start')
+            url = mainPageParser.get_statements_url_by_id(cells[0].text())
+            print(url)
             if url is not None:
                 url += "#prob_" + item.text()
                 webbrowser.open(url)
-            url = mainPageParser.get_contest_url_by_id(
-                self.table.item(item.row(), 0).text()
-                   )
+        elif item.column() == 2:
+            url = mainPageParser.get_results_url_by_id(cells[0].text())
             if url is not None:
                 webbrowser.open(url)
