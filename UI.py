@@ -28,7 +28,8 @@ def initTableParser():
         tableParser.save_cache()
 
 
-def reload_table():
+def reload_table(txt='nono'):
+    print(txt)
     global tableParser
     tableParser = TableParser.from_server()
     tableParser.save_cache()
@@ -99,9 +100,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.setStatusBar(self.statusbar)
         self.set_last_reload_time()
 
-        self.threadPool = QtCore.QThreadPool()
-        self.reloadWorker = Worker(self.threadPool, reload_table)
-        self.reloadWorker.signals.finished.connect(self.on_reload_finished)
+        self.reloadWorker = Worker()
 
         self.update_table()
 
@@ -184,10 +183,11 @@ ejudge, так что если server.179.ru недоступен, то обно
         self.update_table()
 
     def reload_table(self):
-        if self.reloadWorker.is_running:
+        if self.reloadWorker.isRunning():
+            print('already running')
             return
         self.statusbarLabel.setText(" Reloading...")
-        self.reloadWorker.start()
+        self.reloadWorker(reload_table, self.on_reload_finished)
 
     def double_clicked(self):
         item = self.table.currentItem()
