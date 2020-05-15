@@ -2,37 +2,25 @@ from PyQt5 import QtCore, QtWidgets, QtGui
 from RowSpanTableWidget import RowSpanTableWidget
 from TableParser import TableParser
 from MainPageParser import MainPageParser
-from Worker import Worker
 import webbrowser
 import cfg
 
-tableParser = TableParser()
-mainPageParser = MainPageParser()
 
-
-def initTableParser():
-    global tableParser
-    is_loaded = False
-    if TableParser.is_cache_exists():
+def initParser(parserClass):
+    name = parserClass.__name__
+    # parserClass.delete_cache()
+    if parserClass.is_cache_exists():
         try:
-            print('Loading from cache...')
-            tableParser = TableParser.from_cache()
-            print('Loaded')
-            is_loaded = True
+            print(f'Loading {name} from cache...')
+            return parserClass.from_cache()
         except Exception as ex:
             print(ex)
-    if not is_loaded:
-        print('Loading from server...')
-        tableParser = TableParser.from_server()
-        print('Loaded')
-        tableParser.save_cache()
+    print(f'Loading {name} from server...')
+    return parserClass.from_server()
 
 
-def reload_table(txt='nono'):
-    print(txt)
-    global tableParser
-    tableParser = TableParser.from_server()
-    tableParser.save_cache()
+tableParser = initParser(TableParser)
+mainPageParser = initParser(MainPageParser)
 
 
 class Ui_MainWindow(QtWidgets.QMainWindow):
@@ -99,8 +87,6 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.statusbar.addWidget(self.statusbarLabel)
         self.setStatusBar(self.statusbar)
         self.set_last_reload_time()
-
-        self.reloadWorker = Worker()
 
         self.update_table()
 
@@ -183,11 +169,12 @@ ejudge, так что если server.179.ru недоступен, то обно
         self.update_table()
 
     def reload_table(self):
-        if self.reloadWorker.isRunning():
-            print('already running')
+        if tableParser.isReloading():
+            print('Already reloading')
             return
         self.statusbarLabel.setText(" Reloading...")
-        self.reloadWorker(reload_table, self.on_reload_finished)
+        tableParser.reload(self.on_reload_finished)
+        mainPageParser.reload()
 
     def double_clicked(self):
         item = self.table.currentItem()
@@ -195,7 +182,6 @@ ejudge, так что если server.179.ru недоступен, то обно
             self.lineEdit.setText(item.text())
             return
         cells = [self.table.item(item.row(), col) for col in range(3)]
-        print(cells)
         if item.column() == 0:
             url = mainPageParser.get_contest_url_by_id(cells[0].text())
             if url is not None:

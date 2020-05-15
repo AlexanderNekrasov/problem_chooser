@@ -2,13 +2,11 @@ import requests
 import re
 from bs4 import BeautifulSoup
 from copy import deepcopy
-import cachepath
-import gzip
 import datetime
-
+from Worker import Worker
+from Parser import Parser
 
 TABLE_URL = 'https://server.179.ru/shashkov/stand_b22.php'
-CACHE_LOCATION = 'problem_chooser_saved_table'
 
 ALLOWED_VERDICTS = ('NO', 'OK', 'RJ', 'PR', 'WA', 'PE', 'RT', 'TL', 'ML',
                     'SV', 'IG', 'DQ', 'CF', 'CE', 'WT', 'SM', 'SY', 'SK',
@@ -19,20 +17,7 @@ BAD_VERDICTS = ('DQ', 'CF', 'SE', 'SY')
 TOSOLVE_VERDICTS = ('NO', 'RJ', 'WA', 'PE', 'RT', 'TL', 'ML', 'SV', 'IG',
                     'CF', 'CE', 'WT', 'SM', 'SY', 'SK', 'SE', 'PT')
 
-
-def repr_class(self):
-    attrs = []
-    dct = vars(self)
-    for key in dct:
-        attrs.append(f'{key}={repr(dct[key])}')
-    return type(self).__name__ + '.from_repr(' + ','.join(attrs) + ')'
-
-
-def from_repr_class(cls, dct):
-    obj = cls()
-    for key in dct:
-        obj.__setattr__(key, dct[key])
-    return obj
+_table_parser_reload_worker = Worker()
 
 
 class Contest:
@@ -56,10 +41,6 @@ class Contest:
             self.prob_full_names.append(tds_prob_names[prob_id]['title'])
             self.prob_short_names.append(tds_prob_names[prob_id].text)
 
-    @classmethod
-    def from_repr(cls, **kwargs):
-        return from_repr_class(cls, kwargs)
-
     def prob_short_name(self, prob_id):
         return self.prob_short_names[prob_id - self.first_prob_id]
 
@@ -68,9 +49,6 @@ class Contest:
 
     def __str__(self):
         return f'#{self.id}, {self.name}'
-
-    def __repr__(self):
-        return repr_class(self)
 
 
 class Problem:
@@ -94,10 +72,6 @@ class Problem:
         invisible_attempts = self.attempts - sum((ok, wa, bad))
         score = 2.0 * ok - 0.7 * wa - 1.0 * bad - 0.1 * invisible_attempts
         return round(score, 5)
-
-    @classmethod
-    def from_repr(cls, **kwargs):
-        return from_repr_class(cls, kwargs)
 
     def __lt__(self, other):
         return (self.score, self.contest_id, self.id) < \
@@ -125,9 +99,6 @@ class Problem:
 
     def __str__(self):
         return f'{self.score} ---  {self.short_name}  ---  #{self.contest_id}'
-
-    def __repr__(self):
-        return repr_class(self)
 
 
 class Participant:
@@ -163,60 +134,26 @@ class Participant:
                 res.append(prob_id)
         return res
 
-    @classmethod
-    def from_repr(cls, **kwargs):
-        return from_repr_class(cls, kwargs)
 
-    def __repr__(self):
-        return repr_class(self)
+class TableParser(Parser):
 
-
-class TableParser:
-
-    def __init__(self, first_contest=None, last_contest=None):
+    def __init__(self, first_contest=690, last_contest=5000):
         self.first_contest = first_contest
         self.last_contest = last_contest
         self.last_reload_time = None
 
-    @staticmethod
-    def from_cache(location=CACHE_LOCATION):
-        f = cachepath.CachePath(location)
-        if not f.exists():
-            raise Exception('Cache file is not exists')
+    def set_from_server(self):
         try:
-            bts = gzip.decompress(f.read_bytes())
-            text = bts.decode(encoding='utf-8')
-            return eval(text)
-        except Exception:
-            raise Exception('There are some problems with cache. Please '
-                            'update the cache by get table from server.')
-
-    def save_cache(self, location=CACHE_LOCATION):
-        f = cachepath.CachePath(location)
-        text = repr(self)
-        bts = gzip.compress(bytes(text, encoding='utf-8'))
-        f.write_bytes(bts)
-
-    @staticmethod
-    def is_cache_exists(location=CACHE_LOCATION):
-        return cachepath.CachePath(location).exists()
-
-    @staticmethod
-    def delete_cache(location=CACHE_LOCATION):
-        return cachepath.CachePath(location).rm()
-
-    @staticmethod
-    def from_server(first_contest=690, last_contest=5000):
-        try:
-            p = TableParser(first_contest, last_contest)
-            p.last_reload_time = datetime.datetime.now()
-            html = TableParser.get_table_html(first_contest, last_contest)
-            p.set_from_html(html)
+            time_now = datetime.datetime.now()
+            html = TableParser.get_table_html(self.first_contest,
+                                              self.last_contest)
+            self.set_from_html(html)
+            self.last_reload_time = time_now
         except Exception:
             raise Exception('There are some problems with server. Please '
                             'check the server is up or you Internet '
                             'connection.')
-        return p
+        self.save_cache()
 
     def set_from_html(self, html):
         soup = BeautifulSoup(html, 'html.parser')
@@ -262,9 +199,8 @@ class TableParser:
         url = f'{TABLE_URL}?from={first_contest}&to={last_contest}'
         return requests.get(url).text
 
-    @classmethod
-    def from_repr(cls, **kwargs):
-        return from_repr_class(cls, kwargs)
-
-    def __repr__(self):
-        return repr_class(self)
+    def __getattr__(self, item):
+        if item == 'reload_worker':
+            return _table_parser_reload_worker
+        else:
+            raise AttributeError
