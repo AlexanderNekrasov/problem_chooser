@@ -36,9 +36,7 @@ class MainPageParser(Parser):
         self.save_cache()
 
     def get_statements_url_by_id(self, contest_id):
-        print('join...')
         self.reload_worker.join()
-        print('join!!!')
         return self.statements_url.get(contest_id, None)
 
     def get_contest_url_by_id(self, contest_id):

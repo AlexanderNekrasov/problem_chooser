@@ -187,9 +187,7 @@ ejudge, так что если server.179.ru недоступен, то обно
             if url is not None:
                 webbrowser.open(url)
         elif item.column() == 1:
-            print('start')
             url = mainPageParser.get_statements_url_by_id(cells[0].text())
-            print(url)
             if url is not None:
                 url += "#prob_" + item.text()
                 webbrowser.open(url)
