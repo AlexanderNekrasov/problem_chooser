@@ -40,3 +40,7 @@ class Worker(QtCore.QThread):
         self.args = args
         self.kwargs = kwargs
         self.start()
+
+    def join(self):
+        self.quit()
+        self.wait()
