@@ -6,6 +6,7 @@ import datetime
 from Worker import Worker
 from Parser import Parser
 
+
 TABLE_URL = 'https://server.179.ru/shashkov/stand_b22.php'
 
 ALLOWED_VERDICTS = ('NO', 'OK', 'RJ', 'PR', 'WA', 'PE', 'RT', 'TL', 'ML',
@@ -47,16 +48,12 @@ class Contest:
     def prob_full_name(self, prob_id):
         return self.prob_full_names[prob_id - self.first_prob_id]
 
-    def __str__(self):
-        return f'#{self.id}, {self.name}'
-
 
 class Problem:
 
-    def __init__(self, contest_ind=None, prob_id=None, contest=None):
+    def __init__(self, prob_id=None, contest=None):
         if contest is None:
             return
-        self.contest_ind = contest_ind
         self.contest_id = contest.id
         self.id = prob_id
         self.short_name = contest.prob_short_name(prob_id)
@@ -77,18 +74,6 @@ class Problem:
         return (self.score, self.contest_id, self.id) < \
                (other.score, other.contest_id, self.id)
 
-    def __le__(self, other):
-        return (self.score, self.contest_id, self.id) <= \
-               (other.score, other.contest_id, self.id)
-
-    def __gt__(self, other):
-        return (self.score, self.contest_id, self.id) > \
-               (other.score, other.contest_id, self.id)
-
-    def __ge__(self, other):
-        return (self.score, self.contest_id, self.id) >= \
-               (other.score, other.contest_id, self.id)
-
     def __iadd__(self, verdict):
         if isinstance(verdict, int):
             self.attempts += verdict
@@ -96,9 +81,6 @@ class Problem:
             self.verdicts[verdict] += 1
             self.attempts += 1
         return self
-
-    def __str__(self):
-        return f'{self.score} ---  {self.short_name}  ---  #{self.contest_id}'
 
 
 class Participant:
@@ -163,14 +145,13 @@ class TableParser(Parser):
         tds_contests = rows[0].find_all('td', {'class': 'contest'})
         tds_problem_names = rows[1].find_all('td', {'class': 'problem'})
 
-        contests = []
         problems = []
         for td_contest in tds_contests:
-            contests.append(Contest(td_contest, len(problems),
-                                    tds_problem_names))
-            for i in range(contests[-1].n_probs):
+            last_contest = Contest(td_contest, len(problems),
+                                   tds_problem_names)
+            for i in range(last_contest.n_probs):
                 problems.append(
-                    Problem(len(contests) - 1, len(problems), contests[-1]))
+                    Problem(len(problems), last_contest))
 
         participants = dict()
         for par_ind in range(2, len(rows)):
@@ -180,7 +161,6 @@ class TableParser(Parser):
                 problems[prob_id] += par.verdicts[prob_id]
                 problems[prob_id] += max(0, par.attempts[prob_id] - 1)
 
-        self.contests = contests
         self.problems = problems
         self.participants = participants
 
