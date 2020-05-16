@@ -49,7 +49,6 @@ if MAKE_ZIP:
         for root, dirs, files in os.walk(NAME):
             for f in files:
                 z.write(os.path.join(root, f))
-
     shutil.move(NAME + '.zip', NAME)
 
 print("\nBuild complete")
