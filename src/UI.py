@@ -1,9 +1,10 @@
-from PyQt5 import QtCore, QtWidgets, QtGui
-from RowSpanTableWidget import RowSpanTableWidget
-from TableParser import TableParser
-from MainPageParser import MainPageParser
 import webbrowser
-import cfg
+from PyQt5 import QtCore, QtWidgets, QtGui
+
+from src import cfg
+from src.MainPageParser import MainPageParser
+from src.RowSpanTableWidget import RowSpanTableWidget
+from src.TableParser import TableParser
 
 
 def initParser(parserClass):

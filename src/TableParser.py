@@ -1,10 +1,11 @@
-import requests
-import re
-from bs4 import BeautifulSoup
-from copy import deepcopy
 import datetime
-from Worker import Worker
-from Parser import Parser
+import re
+from copy import deepcopy
+import requests
+from bs4 import BeautifulSoup
+
+from src.Parser import Parser
+from src.Worker import Worker
 
 
 TABLE_URL = 'https://server.179.ru/shashkov/stand_b22.php'

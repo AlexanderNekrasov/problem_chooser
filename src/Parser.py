@@ -1,8 +1,9 @@
-import cachepath
 import _pickle as cPickle
 import gzip
-from Worker import EMPTY_FUNCTION
 from os import path
+import cachepath
+
+from src.Worker import EMPTY_FUNCTION
 
 
 CACHE_LOCATIONS = {'TableParser': path.join('problem_chooser', 'saved_table'),

@@ -1,4 +1,4 @@
-import UI
+from src import UI
 from PyQt5 import QtWidgets
 
 

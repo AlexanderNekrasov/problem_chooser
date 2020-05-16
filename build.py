@@ -3,7 +3,8 @@ import os
 import shutil
 import zipfile
 from pkg_resources import require, DistributionNotFound, VersionConflict
-import cfg
+from src import cfg
+
 
 args = sys.argv[1:]
 MAKE_ZIP = '--make-zip' in args
