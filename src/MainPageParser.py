@@ -2,11 +2,10 @@ import re
 import requests
 from bs4 import BeautifulSoup
 
+import cfg
 from src.Parser import Parser
 from src.Worker import Worker
 
-
-MAIN_PAGE_URL = "https://server.179.ru/wiki/?page=Informatika/9B"
 
 _main_page_parser_reload_worker = Worker()
 
@@ -26,7 +25,7 @@ class MainPageParser(Parser):
         self.urls = None
 
     def set_from_server(self):
-        html = requests.get(MAIN_PAGE_URL).text
+        html = requests.get(cfg.MAIN_PAGE_URL).text
         soup = BeautifulSoup(html, "html.parser")
         contest_rows = soup.find_all("tr", {"class": "userrow"})
         urls = dict()

@@ -3,7 +3,7 @@ import os
 import shutil
 import zipfile
 from pkg_resources import require, DistributionNotFound, VersionConflict
-from src import cfg
+import cfg
 
 
 args = sys.argv[1:]

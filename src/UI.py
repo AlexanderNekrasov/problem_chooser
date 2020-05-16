@@ -1,7 +1,7 @@
 import webbrowser
 from PyQt5 import QtCore, QtWidgets, QtGui
 
-from src import cfg
+import cfg
 from src.MainPageParser import MainPageParser
 from src.RowSpanTableWidget import RowSpanTableWidget
 from src.TableParser import TableParser
