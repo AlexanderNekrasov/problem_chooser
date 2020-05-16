@@ -46,7 +46,8 @@ if os.path.exists('main.spec'):
 
 print("\nBUILDING...")
 exit_code = os.system(
-    sys.executable + ' -m PyInstaller -F main.py --clean --noconsole --add-data resources/help:reru sources')
+    sys.executable + ' -m PyInstaller -F main.py --clean --noconsole \
+                      --add-data resources/help:reru sources')
 if exit_code:
     print("\nBUILDING FAILED")
     sys.exit(exit_code)
