@@ -98,12 +98,12 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         for el in names:
             if len(el) >= len(name) and el[:len(name)].lower() == name:
                 good_names.append(el)
-                self.table.appendRow([3], el)
+                self.table.appendRow([3], [el])
         if not good_names:
             for el in names:
                 if name in el.lower():
                     good_names.append(el)
-                    self.table.appendRow([3], el)
+                    self.table.appendRow([3], [el])
         if len(good_names) == 1:
             name = good_names[0]
             stat = tableParser.get_stat(name)
@@ -111,10 +111,10 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
             for el in stat:
                 self.table.appendRow(
                     [1, 1, 1],
-                    map(str, [el.contest_id, el.short_name, el.score])
+                    tuple(map(str, [el.contest_id, el.short_name, el.score]))
                 )
         elif len(good_names) == 0:
-            self.table.appendRow(3, 'NOT FOUND')
+            self.table.appendRow([3], ['NOT FOUND'])
             self.table.item(0, 0).setTextAlignment(QtCore.Qt.AlignHCenter)
 
     def open_help(self):

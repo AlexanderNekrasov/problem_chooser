@@ -2,9 +2,11 @@ import cachepath
 import _pickle as cPickle
 import gzip
 from Worker import EMPTY_FUNCTION
+from os import path
 
-CACHE_LOCATIONS = {'TableParser': 'problem_chooser_saved_table',
-                   'MainPageParser': 'problem_chooser_main_page'}
+
+CACHE_LOCATIONS = {'TableParser': path.join('problem_chooser', 'saved_table'),
+                   'MainPageParser': path.join('problem_chooser', 'main_page')}
 
 
 def get_location(location, cls):
@@ -15,6 +17,7 @@ def get_location(location, cls):
 
 
 class Parser:
+
     @classmethod
     def from_cache(cls, location=None):
         location = get_location(location, cls)

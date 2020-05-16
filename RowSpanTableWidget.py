@@ -1,5 +1,4 @@
 from PyQt5 import QtCore, QtWidgets
-from collections.abc import Iterable
 
 
 class RowSpanTableWidget(QtWidgets.QTableWidget):
@@ -12,35 +11,12 @@ class RowSpanTableWidget(QtWidgets.QTableWidget):
         self.horizontalHeader().setSectionResizeMode(
             QtWidgets.QHeaderView.Stretch)
 
-    def _fix_spans_and_texts(self, spans_, texts_):
-        if not isinstance(spans_, Iterable):
-            spans = [spans_]
-        else:
-            spans = list(spans_)
-        if not isinstance(texts_, Iterable) or isinstance(texts_, str):
-            texts = [texts_]
-        else:
-            texts = list(texts_)
-        spans += [1] * max(0, len(texts) - len(spans))
-        texts += [''] * max(0, len(spans) - len(texts))
-
-        columns = self.columnCount()
-        sm = sum(spans)
-        while sm > columns:
-            if sm - spans[-1] < columns:
-                spans[-1] = columns - (sm - spans[-1])
-                sm = columns
-            else:
-                sm -= spans[-1]
-                spans.pop()
-                texts.pop()
-
-        spans += [1] * (columns - sm)
-        texts += [''] * (columns - sm)
-        return tuple(spans), tuple(texts)
+    def _check_spans_texts(self, spans, texts):
+        return sum(spans) == self.columnCount() and len(spans) == len(texts)
 
     def appendRow(self, spans=(), texts=()):
-        spans, texts = self._fix_spans_and_texts(spans, texts)
+        if not self._check_spans_texts(spans, texts):
+            raise Exception('Wrong format of spans and/or texts')
         ind = self.rowCount()
         self.insertRow(ind)
         jnd = 0
