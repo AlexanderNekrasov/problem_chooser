@@ -17,16 +17,11 @@ class Worker(QtCore.QThread):
         self.function = EMPTY_FUNCTION
         self.args = []
         self.kwargs = {}
-
-        self.moveToThread(self)
-
         self.result = None
         self.error = None
-
         self.signals = WorkerSignals()
-        self.started.connect(self.function_run)
 
-    def function_run(self):
+    def run(self):
         try:
             self.result = self.function(*self.args, **self.kwargs)
         except Exception as ex:
