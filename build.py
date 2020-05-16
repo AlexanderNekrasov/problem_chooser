@@ -39,10 +39,14 @@ except Exception as ex:
 #                           BUILD, CLEAN AND RENAME                           #
 
 shutil.rmtree(NAME, ignore_errors=True)
+shutil.rmtree('build', ignore_errors=True)
+shutil.rmtree('dist', ignore_errors=True)
+if os.path.exists('main.spec'):
+    os.remove('main.spec')
 
 print("\nBUILDING...")
 exit_code = os.system(
-    sys.executable + ' -m PyInstaller -F main.py --clean --noconsole')
+    sys.executable + ' -m PyInstaller -F main.py --clean --noconsole --add-data resources/help:resources')
 if exit_code:
     print("\nBUILDING FAILED")
     sys.exit(exit_code)
