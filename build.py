@@ -11,7 +11,6 @@ import cfg
 
 args = sys.argv[1:]
 MAKE_ZIP = '--make-zip' in args
-NOT_INSTALL_REQUIRMENTS = '--not-install-reqs' in args
 
 NAME = 'problem-chooser-v' + cfg.VERSION
 
@@ -19,9 +18,8 @@ NAME = 'problem-chooser-v' + cfg.VERSION
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 #                       INSTALL AND CHECK REQUIREMENTS                        #
 
-if not NOT_INSTALL_REQUIRMENTS:
-    print("Installing requirements.txt")
-    os.system(sys.executable + " -m pip install -r requirements.txt")
+print("Checking and installing requirements.txt")
+os.system(sys.executable + " -m pip install -r requirements.txt")
 
 try:
     require(open('requirements.txt').read().strip().split('\n'))
