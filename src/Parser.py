@@ -1,17 +1,14 @@
-import cachepath
 import _pickle as cPickle
 import gzip
-from Worker import EMPTY_FUNCTION
-from os import path
+import cachepath
+
+import cfg
+from src.Worker import EMPTY_FUNCTION
 
 
-CACHE_LOCATIONS = {'TableParser': path.join('problem_chooser', 'saved_table'),
-                   'MainPageParser': path.join('problem_chooser', 'main_page')}
-
-
-def get_location(location, cls):
+def get_cache_location(location, cls):
     if location is None:
-        return CACHE_LOCATIONS[cls.__name__]
+        return cfg.CACHE_LOCATIONS[cls.__name__]
     else:
         return location
 
@@ -20,7 +17,7 @@ class Parser:
 
     @classmethod
     def from_cache(cls, location=None):
-        location = get_location(location, cls)
+        location = get_cache_location(location, cls)
         with cachepath.CachePath(location) as f:
             if not f.exists():
                 raise Exception('Cache file is not exists')
@@ -33,7 +30,7 @@ class Parser:
                                 'update the cache by get table from server.')
 
     def save_cache(self, location=None):
-        location = get_location(location, self.__class__)
+        location = get_cache_location(location, self.__class__)
         with cachepath.CachePath(location) as f:
             bts = cPickle.dumps(self)
             comp_bts = gzip.compress(bts)
@@ -41,12 +38,12 @@ class Parser:
 
     @classmethod
     def is_cache_exists(cls, location=None):
-        location = get_location(location, cls)
+        location = get_cache_location(location, cls)
         return cachepath.CachePath(location).exists()
 
     @classmethod
     def delete_cache(cls, location=None):
-        location = get_location(location, cls)
+        location = get_cache_location(location, cls)
         return cachepath.CachePath(location).rm()
 
     @classmethod

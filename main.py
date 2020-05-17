@@ -1,5 +1,6 @@
-import UI
 from PyQt5 import QtWidgets
+
+from src import UI
 
 
 if __name__ == "__main__":

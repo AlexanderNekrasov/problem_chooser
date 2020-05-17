@@ -1,9 +1,12 @@
-from PyQt5 import QtCore, QtWidgets, QtGui
-from RowSpanTableWidget import RowSpanTableWidget
-from TableParser import TableParser
-from MainPageParser import MainPageParser
+import gzip
+from os import path
 import webbrowser
+from PyQt5 import QtCore, QtWidgets, QtGui
+
 import cfg
+from src.MainPageParser import MainPageParser
+from src.RowSpanTableWidget import RowSpanTableWidget
+from src.TableParser import TableParser
 
 
 def initParser(parserClass):
@@ -118,40 +121,10 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
             self.table.item(0, 0).setTextAlignment(QtCore.Qt.AlignHCenter)
 
     def open_help(self):
-        text_help = '''Problem Chooser for 22b class, school 179
-
-Здесь вы можете узнать, какие задачи вам будет проще всего решить, что бы \
-побыстрее закрыть дедлайн.
-
-В специальном поле можно ввести своё имя, и вам будет предложен список \
-нерешённых задач в порядке возрастания сложности.
-В списке вы можете увидеть оценку задачи (score), id контеста и название \
-задачи (как в тестирующей системе - A, B, C и т.д.)
-
-Score - оценка простоты задач. Чем больше оценка, тем, скорее всего, вам \
-будет легче решить задачу. Она зависит от посылок других людей, так что у \
-самых новых задач оценка будет не совсем корректна (она просто будет около \
-нуля).
-
-Данные о посылках для подсчёта простоты задач берутся из общей таблицы \
-ejudge, так что если server.179.ru недоступен, то обновить данные не \
-получиться. Но они сохраняются, так что при перезапуске программы все данные \
-останутся.
-Вручную обновить данные можно при нажатии на кнопку "Reload", Сtrl+R или в \
-меню.
-
-Если вы обнаружили неисправность или хотите новую функциональность, \
-*обязательно* напишите разработчикам:
- * telegram: @crazyilian
- * telegram: @AlexNekrasov01
- * vk: @crazyilian
-
-Также поддержать проект вы можете отправив любую сумму:
- * на телефон +79295917075 (мегафон).
- * на yandex.money 4100-1489-0105-922
-'''
-        QtWidgets.QMessageBox.about(self.centralwidget, "Help",
-                                    text_help)
+        location = cfg.resource('help')
+        with open(location, 'r') as f:
+            text = f.read()
+        QtWidgets.QMessageBox.about(self.centralwidget, "Help", text)
 
     def set_last_reload_time(self):
         self.statusbarLabel.setText(self.get_last_reload_time())

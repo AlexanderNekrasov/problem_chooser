@@ -1,13 +1,13 @@
-import requests
-import re
-from bs4 import BeautifulSoup
-from copy import deepcopy
 import datetime
-from Worker import Worker
-from Parser import Parser
+import re
+from copy import deepcopy
+import requests
+from bs4 import BeautifulSoup
 
+import cfg
+from src.Parser import Parser
+from src.Worker import Worker
 
-TABLE_URL = 'https://server.179.ru/shashkov/stand_b22.php'
 
 ALLOWED_VERDICTS = ('NO', 'OK', 'RJ', 'PR', 'WA', 'PE', 'RT', 'TL', 'ML',
                     'SV', 'IG', 'DQ', 'CF', 'CE', 'WT', 'SM', 'SY', 'SK',
@@ -176,7 +176,7 @@ class TableParser(Parser):
 
     @staticmethod
     def get_table_html(first_contest=690, last_contest=5000):
-        url = f'{TABLE_URL}?from={first_contest}&to={last_contest}'
+        url = f'{cfg.TABLE_URL}?from={first_contest}&to={last_contest}'
         return requests.get(url).text
 
     def __getattr__(self, item):
