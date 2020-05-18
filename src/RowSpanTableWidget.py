@@ -29,7 +29,7 @@ class RowSpanTableWidget(QtWidgets.QTableWidget):
             jnd += cell_size
 
     def getRow(self, row):
-        return (self.item(row, col) for col in range(self.columnCount()))
+        return [self.item(row, col) for col in range(self.columnCount())]
 
     def lastRowItem(self, column):
         return self.item(self.rowCount() - 1, column)
