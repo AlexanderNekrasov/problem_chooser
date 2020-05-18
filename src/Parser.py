@@ -8,7 +8,7 @@ from src.Worker import EMPTY_FUNCTION
 
 def get_cache_location(location, cls):
     if location is None:
-        location = cfg.CACHE_LOCATIONS[cls.__name__].copy()
+        location = cfg.CACHE_LOCATIONS[cls.__name__]
     return location
 
 
