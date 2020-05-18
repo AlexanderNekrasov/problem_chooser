@@ -1,6 +1,5 @@
 import datetime
 import re
-from copy import deepcopy
 import requests
 from bs4 import BeautifulSoup
 
@@ -15,8 +14,8 @@ ALLOWED_VERDICTS = ('NO', 'OK', 'RJ', 'PR', 'WA', 'PE', 'RT', 'TL', 'ML',
 OK_VERDICTS = ('OK', 'PR', 'PD')
 WA_VERDICTS = ('RJ', 'WA', 'PE', 'RT', 'TL', 'ML', 'SM')
 BAD_VERDICTS = ('DQ', 'CF', 'SE', 'SY')
-TOSOLVE_VERDICTS = ('NO', 'RJ', 'WA', 'PE', 'RT', 'TL', 'ML', 'SV', 'IG',
-                    'CF', 'CE', 'WT', 'SM', 'SY', 'SK', 'SE', 'PT')
+CAN_SOLVE_VERDICTS = ('NO', 'RJ', 'WA', 'PE', 'RT', 'TL', 'ML', 'SV', 'IG',
+                      'CF', 'CE', 'WT', 'SM', 'SY', 'SK', 'SE', 'PT')
 
 _table_parser_reload_worker = Worker()
 
@@ -35,8 +34,7 @@ class Contest:
         self.first_prob_id = first_prob_id
         self.prob_short_names = []
         self.prob_full_names = []
-        for prob_id in range(self.first_prob_id,
-                             self.first_prob_id + self.n_probs):
+        for prob_id in range(first_prob_id, first_prob_id + self.n_probs):
             self.prob_full_names.append(tds_prob_names[prob_id]['title'])
             self.prob_short_names.append(tds_prob_names[prob_id].text)
 
@@ -49,7 +47,7 @@ class Contest:
 
 class Problem:
 
-    def __init__(self, prob_id, contest):
+    def __init__(self, prob_id, contest, problem_verdicts, problem_attempts):
         self.contest_id = contest.id
         self.contest_name = contest.name
         self.id = prob_id
@@ -57,6 +55,11 @@ class Problem:
         self.full_name = contest.prob_full_name(prob_id)
         self.attempts = 0
         self.verdicts = dict().fromkeys(ALLOWED_VERDICTS, 0)
+        for (verdict, attempts) in zip(problem_verdicts, problem_attempts):
+            self.attempts += max(0, attempts - 1)
+            if verdict != "NO":
+                self.verdicts[verdict] += 1
+                self.attempts += 1
 
     @property
     def score(self):
@@ -70,11 +73,6 @@ class Problem:
     def __lt__(self, other):
         return (self.score, self.contest_id, self.id) < \
                (other.score, other.contest_id, self.id)
-
-    def add_verdict(self, verdict):
-        if verdict != 'NO':
-            self.verdicts[verdict] += 1
-            self.attempts += 1
 
 
 class Participant:
@@ -101,10 +99,10 @@ class Participant:
             self.attempts.append(num)
 
     @property
-    def no_problems_id(self):
+    def can_solve_problem_ids(self):
         res = []
         for prob_id, ver in enumerate(self.verdicts):
-            if ver in TOSOLVE_VERDICTS:
+            if ver in CAN_SOLVE_VERDICTS:
                 res.append(prob_id)
         return res
 
@@ -137,20 +135,25 @@ class TableParser(Parser):
         tds_contests = rows[0].find_all('td', {'class': 'contest'})
         tds_problem_names = rows[1].find_all('td', {'class': 'problem'})
 
+        participants = dict()
+        for par_ind in range(2, len(rows)):
+            par = Participant(rows[par_ind])
+            participants[par.name] = par
+
         problems = []
         for td_contest in tds_contests:
             last_contest = Contest(td_contest, len(problems),
                                    tds_problem_names)
             for i in range(last_contest.n_probs):
-                problems.append(Problem(len(problems), last_contest))
-
-        participants = dict()
-        for par_ind in range(2, len(rows)):
-            par = Participant(rows[par_ind])
-            participants[par.name] = par
-            for prob_id, prob in enumerate(problems):
-                prob.add_verdict(par.verdicts[prob_id])
-                prob.attempts += max(0, par.attempts[prob_id] - 1)
+                problem_verdicts = []
+                problem_attempts = []
+                for participant in participants.values():
+                    prob_id = i + last_contest.first_prob_id
+                    problem_verdicts.append(participant.verdicts[prob_id])
+                    problem_attempts.append(participant.attempts[prob_id])
+                p = Problem(len(problems), last_contest, problem_verdicts,
+                            problem_attempts)
+                problems.append(p)
 
         self.problems = problems
         self.participants = participants
@@ -159,14 +162,14 @@ class TableParser(Parser):
         return list(self.participants.keys())
 
     def get_stat(self, name):
-        no_problems = []
-        for prob_id in self.participants[name].no_problems_id:
-            no_problems.append(deepcopy(self.problems[prob_id]))
-        no_problems.sort(reverse=True)
-        return no_problems
+        can_solve = []
+        for prob_id in self.participants[name].can_solve_problem_ids:
+            can_solve.append(self.problems[prob_id])
+        can_solve.sort(reverse=True)
+        return can_solve
 
     @staticmethod
-    def get_table_html(first_contest=690, last_contest=5000):
+    def get_table_html(first_contest, last_contest):
         url = f'{cfg.TABLE_URL}?from={first_contest}&to={last_contest}'
         return requests.get(url).text
 
