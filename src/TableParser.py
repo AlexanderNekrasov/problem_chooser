@@ -71,13 +71,10 @@ class Problem:
         return (self.score, self.contest_id, self.id) < \
                (other.score, other.contest_id, self.id)
 
-    def __iadd__(self, verdict):
-        if isinstance(verdict, int):
-            self.attempts += verdict
-        elif verdict != 'NO':
+    def add_verdict(self, verdict):
+        if verdict != 'NO':
             self.verdicts[verdict] += 1
             self.attempts += 1
-        return self
 
 
 class Participant:
@@ -145,16 +142,15 @@ class TableParser(Parser):
             last_contest = Contest(td_contest, len(problems),
                                    tds_problem_names)
             for i in range(last_contest.n_probs):
-                problems.append(
-                    Problem(len(problems), last_contest))
+                problems.append(Problem(len(problems), last_contest))
 
         participants = dict()
         for par_ind in range(2, len(rows)):
             par = Participant(rows[par_ind])
             participants[par.name] = par
             for prob_id, prob in enumerate(problems):
-                prob += par.verdicts[prob_id]
-                prob += max(0, par.attempts[prob_id] - 1)
+                prob.add_verdict(par.verdicts[prob_id])
+                prob.attempts += max(0, par.attempts[prob_id] - 1)
 
         self.problems = problems
         self.participants = participants
