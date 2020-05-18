@@ -1,5 +1,3 @@
-import gzip
-from os import path
 import webbrowser
 from PyQt5 import QtCore, QtWidgets, QtGui
 
@@ -12,7 +10,7 @@ from src.TableParser import TableParser
 def initParser(parserClass):
     name = parserClass.__name__
     # parserClass.delete_cache()
-    if parserClass.is_cache_exists():
+    if parserClass.cache_exists():
         try:
             print(f'Loading {name} from cache...')
             return parserClass.from_cache()

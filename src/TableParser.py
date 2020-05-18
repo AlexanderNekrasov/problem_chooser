@@ -23,9 +23,7 @@ _table_parser_reload_worker = Worker()
 
 class Contest:
 
-    def __init__(self, td=None, first_prob_id=None, tds_prob_names=None):
-        if td is None:
-            return
+    def __init__(self, td, first_prob_id, tds_prob_names):
         title = td['title']
         self.id = int(re.match(r'#(\d+),.*', title).group(1))
         self.name = re.match(r'.*[^\d.](\d+\..*)', title).group(1)
@@ -51,9 +49,7 @@ class Contest:
 
 class Problem:
 
-    def __init__(self, prob_id=None, contest=None):
-        if contest is None:
-            return
+    def __init__(self, prob_id, contest):
         self.contest_id = contest.id
         self.id = prob_id
         self.short_name = contest.prob_short_name(prob_id)
@@ -85,9 +81,7 @@ class Problem:
 
 class Participant:
 
-    def __init__(self, tr=None):
-        if tr is None:
-            return
+    def __init__(self, tr):
         self.id = tr.find('td', {'class': 'rank'}).text
         self.all_name = tr.find('td', {'class': 'name'}).text
         self.name = re.match(r'\w+? (.*)', self.all_name).group(1)

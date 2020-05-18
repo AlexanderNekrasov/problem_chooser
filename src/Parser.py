@@ -22,9 +22,9 @@ class Parser:
             if not f.exists():
                 raise Exception('Cache file is not exists')
             try:
-                comp_bts = f.read_bytes()
-                bts = gzip.decompress(comp_bts)
-                return cPickle.loads(bts)
+                compressed_dump = f.read_bytes()
+                dump = gzip.decompress(compressed_dump)
+                return cPickle.loads(dump)
             except Exception:
                 raise Exception('There are some problems with cache. Please '
                                 'update the cache by get table from server.')
@@ -32,12 +32,12 @@ class Parser:
     def save_cache(self, location=None):
         location = get_cache_location(location, self.__class__)
         with cachepath.CachePath(location) as f:
-            bts = cPickle.dumps(self)
-            comp_bts = gzip.compress(bts)
-            f.write_bytes(comp_bts)
+            dump = cPickle.dumps(self)
+            compressed_dump = gzip.compress(dump)
+            f.write_bytes(compressed_dump)
 
     @classmethod
-    def is_cache_exists(cls, location=None):
+    def cache_exists(cls, location=None):
         location = get_cache_location(location, cls)
         return cachepath.CachePath(location).exists()
 
