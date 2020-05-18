@@ -57,5 +57,4 @@ class MainPageParser(Parser):
     def __getattr__(self, item):
         if item == 'reload_worker':
             return _main_page_parser_reload_worker
-        else:
-            raise AttributeError
+        raise AttributeError

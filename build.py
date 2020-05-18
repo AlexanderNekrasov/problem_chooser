@@ -1,5 +1,6 @@
 import sys
 import os
+import subprocess
 import shutil
 import zipfile
 from pkg_resources import require, DistributionNotFound, VersionConflict
@@ -19,7 +20,7 @@ NAME = 'problem-chooser-v' + cfg.VERSION
 #                       INSTALL AND CHECK REQUIREMENTS                        #
 
 print("Checking and installing requirements.txt")
-os.system(sys.executable + " -m pip install -r requirements.txt")
+subprocess.call(sys.executable + " -m pip install -r requirements.txt")
 
 try:
     require(open('requirements.txt').read().strip().split('\n'))
@@ -43,7 +44,7 @@ if os.path.exists('main.spec'):
     os.remove('main.spec')
 
 print("\nBUILDING...")
-exit_code = os.system(
+exit_code = subprocess.call(
     sys.executable + ' -m PyInstaller -F main.py --clean --noconsole \
                       --add-data resources/help:resources')
 if exit_code:
