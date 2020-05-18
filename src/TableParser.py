@@ -51,6 +51,7 @@ class Problem:
 
     def __init__(self, prob_id, contest):
         self.contest_id = contest.id
+        self.contest_name = contest.name
         self.id = prob_id
         self.short_name = contest.prob_short_name(prob_id)
         self.full_name = contest.prob_full_name(prob_id)

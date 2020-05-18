@@ -28,5 +28,8 @@ class RowSpanTableWidget(QtWidgets.QTableWidget):
             self.setItem(ind, jnd, newItem)
             jnd += cell_size
 
+    def lastRowItem(self, column):
+        return self.item(self.rowCount() - 1, column)
+
     def clear(self):
         self.setRowCount(0)
