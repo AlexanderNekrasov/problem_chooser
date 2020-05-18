@@ -5,6 +5,7 @@ import cfg
 from src.MainPageParser import MainPageParser
 from src.RowSpanTableWidget import RowSpanTableWidget
 from src.TableParser import TableParser
+from src.Worker import Worker
 
 
 def initParser(parserClass):
@@ -12,16 +13,23 @@ def initParser(parserClass):
     # parserClass.delete_cache()
     if parserClass.cache_exists():
         try:
-            print(f'Loading {name} from cache...')
+            print(f"Loading {name} from cache...")
             return parserClass.from_cache()
         except Exception as ex:
             print(ex)
-    print(f'Loading {name} from server...')
+    print(f"Loading {name} from server...")
     return parserClass.from_server()
 
 
-tableParser = initParser(TableParser)
-mainPageParser = initParser(MainPageParser)
+tableParser = TableParser()
+mainPageParser = MainPageParser()
+
+
+def initParsers():
+    global tableParser
+    global mainPageParser
+    tableParser = initParser(TableParser)
+    mainPageParser = initParser(MainPageParser)
 
 
 class Ui_MainWindow(QtWidgets.QMainWindow):
@@ -91,6 +99,10 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
 
         self.update_table()
 
+        self.statusbarLabel.setText(" Reloading... ")
+        self.worker = Worker()
+        self.worker(initParsers, self.on_reload_finished)
+
     def update_table(self):
         name = self.lineEdit.text().lower()
         names = tableParser.get_names()
@@ -117,12 +129,12 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
                 self.table.lastRowItem(0).setToolTip(el.contest_name)
                 self.table.lastRowItem(1).setToolTip(el.full_name)
         elif len(good_names) == 0:
-            self.table.appendRow([3], ['NOT FOUND'])
+            self.table.appendRow([3], ["NOT FOUND"])
             self.table.item(0, 0).setTextAlignment(QtCore.Qt.AlignHCenter)
 
     def open_help(self):
-        location = cfg.resource('help')
-        with open(location, 'r') as f:
+        location = cfg.resource("help")
+        with open(location, "r") as f:
             text = f.read()
         QtWidgets.QMessageBox.about(self.centralwidget, "Help", text)
 
@@ -133,8 +145,8 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         if tableParser.last_reload_time is None:
             strtime = "undefined"
         else:
-            strtime = tableParser.last_reload_time.strftime('%x %X')
-        return " Last reload: " + strtime
+            strtime = tableParser.last_reload_time.strftime("%x %X")
+        return " Last reload: " + strtime + " "
 
     def on_reload_finished(self):
         self.statusbarLabel.setText(self.get_last_reload_time())
@@ -143,9 +155,9 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
 
     def reload_table(self):
         if tableParser.isReloading():
-            print('Already reloading')
+            print("Already reloading")
             return
-        self.statusbarLabel.setText(" Reloading...")
+        self.statusbarLabel.setText(" Reloading... ")
         tableParser.reload(self.on_reload_finished)
         mainPageParser.reload()
 

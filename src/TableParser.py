@@ -113,6 +113,7 @@ class TableParser(Parser):
         self.first_contest = first_contest
         self.last_contest = last_contest
         self.last_reload_time = None
+        self.participants = {}
 
     def set_from_server(self):
         try:
