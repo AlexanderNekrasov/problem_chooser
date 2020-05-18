@@ -8,6 +8,10 @@ from src.TableParser import TableParser
 from src.Worker import Worker
 
 
+tableParser = TableParser()
+mainPageParser = MainPageParser()
+
+
 def initParser(parserClass):
     name = parserClass.__name__
     # parserClass.delete_cache()
@@ -19,10 +23,6 @@ def initParser(parserClass):
             print(ex)
     print(f"Loading {name} from server...")
     return parserClass.from_server()
-
-
-tableParser = TableParser()
-mainPageParser = MainPageParser()
 
 
 def initParsers():
