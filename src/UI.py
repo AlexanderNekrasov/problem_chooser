@@ -8,10 +8,6 @@ from src.TableParser import TableParser
 from src.Worker import Worker
 
 
-tableParser = TableParser()
-mainPageParser = MainPageParser()
-
-
 def initParser(parserClass):
     name = parserClass.__name__
     # parserClass.delete_cache()
@@ -25,18 +21,17 @@ def initParser(parserClass):
     return parserClass.from_server()
 
 
-def initParsers():
-    global tableParser
-    global mainPageParser
-    tableParser = initParser(TableParser)
-    mainPageParser = initParser(MainPageParser)
-
-
 class Ui_MainWindow(QtWidgets.QMainWindow):
 
     def __init__(self):
         super().__init__()
+        self.tableParser = TableParser()
+        self.mainPageParser = MainPageParser()
         self.setupUi()
+
+    def initParsers(self):
+        self.tableParser = initParser(TableParser)
+        self.mainPageParser = initParser(MainPageParser)
 
     def setupUi(self):
         self.setWindowTitle("Problem Chooser v" + cfg.VERSION)
@@ -101,11 +96,11 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
 
         self.statusbarLabel.setText(" Reloading... ")
         self.worker = Worker()
-        self.worker(initParsers, self.on_reload_finished)
+        self.worker(self.initParsers, self.on_reload_finished)
 
     def update_table(self):
         name = self.lineEdit.text().lower()
-        names = tableParser.get_names()
+        names = self.tableParser.get_names()
         self.table.clear()
         good_names = []
         for el in names:
@@ -119,7 +114,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
                     self.table.appendRow([3], [el])
         if len(good_names) == 1:
             name = good_names[0]
-            stat = tableParser.get_stat(name)
+            stat = self.tableParser.get_stat(name)
             self.table.appendRow([1, 1, 1], ["Contest id", "Problem", "Score"])
             for el in stat:
                 self.table.appendRow(
@@ -142,10 +137,10 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.statusbarLabel.setText(self.get_last_reload_time())
 
     def get_last_reload_time(self):
-        if tableParser.last_reload_time is None:
+        if self.tableParser.last_reload_time is None:
             strtime = "undefined"
         else:
-            strtime = tableParser.last_reload_time.strftime("%x %X")
+            strtime = self.tableParser.last_reload_time.strftime("%x %X")
         return " Last reload: " + strtime + " "
 
     def on_reload_finished(self):
@@ -154,29 +149,29 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.update_table()
 
     def reload_table(self):
-        if tableParser.isReloading():
+        if self.tableParser.isReloading():
             print("Already reloading")
             return
         self.statusbarLabel.setText(" Reloading... ")
-        tableParser.reload(self.on_reload_finished)
-        mainPageParser.reload()
+        self.tableParser.reload(self.on_reload_finished)
+        self.mainPageParser.reload()
 
     def double_clicked(self):
         item = self.table.currentItem()
-        if item.text() in tableParser.get_names():
+        if item.text() in self.tableParser.get_names():
             self.lineEdit.setText(item.text())
             return
         cells = self.table.getRow(item.row())
         if item.column() == 0:
-            url = mainPageParser.get_contest_url_by_id(cells[0].text())
+            url = self.mainPageParser.get_contest_url_by_id(cells[0].text())
             if url is not None:
                 webbrowser.open(url)
         elif item.column() == 1:
-            url = mainPageParser.get_statements_url_by_id(cells[0].text())
+            url = self.mainPageParser.get_statements_url_by_id(cells[0].text())
             if url is not None:
                 url += "#prob_" + item.text()
                 webbrowser.open(url)
         elif item.column() == 2:
-            url = mainPageParser.get_results_url_by_id(cells[0].text())
+            url = self.mainPageParser.get_results_url_by_id(cells[0].text())
             if url is not None:
                 webbrowser.open(url)
