@@ -154,7 +154,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         if item.text() in tableParser.get_names():
             self.lineEdit.setText(item.text())
             return
-        cells = [self.table.item(item.row(), col) for col in range(3)]
+        cells = self.table.getRow(item.row())
         if item.column() == 0:
             url = mainPageParser.get_contest_url_by_id(cells[0].text())
             if url is not None:
