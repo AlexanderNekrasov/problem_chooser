@@ -8,9 +8,8 @@ from src.Worker import EMPTY_FUNCTION
 
 def get_cache_location(location, cls):
     if location is None:
-        return cfg.CACHE_LOCATIONS[cls.__name__]
-    else:
-        return location
+        location = cfg.CACHE_LOCATIONS[cls.__name__].copy()
+    return location
 
 
 class Parser:

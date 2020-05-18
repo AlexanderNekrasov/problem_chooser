@@ -152,9 +152,9 @@ class TableParser(Parser):
         for par_ind in range(2, len(rows)):
             par = Participant(rows[par_ind])
             participants[par.name] = par
-            for prob_id in range(len(problems)):
-                problems[prob_id] += par.verdicts[prob_id]
-                problems[prob_id] += max(0, par.attempts[prob_id] - 1)
+            for prob_id, prob in enumerate(problems):
+                prob += par.verdicts[prob_id]
+                prob += max(0, par.attempts[prob_id] - 1)
 
         self.problems = problems
         self.participants = participants
@@ -177,5 +177,4 @@ class TableParser(Parser):
     def __getattr__(self, item):
         if item == 'reload_worker':
             return _table_parser_reload_worker
-        else:
-            raise AttributeError
+        raise AttributeError

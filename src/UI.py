@@ -131,10 +131,10 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
 
     def get_last_reload_time(self):
         if tableParser.last_reload_time is None:
-            return " Last reload: undefined"
+            strtime = "undefined"
         else:
             strtime = tableParser.last_reload_time.strftime('%x %X')
-            return " Last reload: " + strtime
+        return " Last reload: " + strtime
 
     def on_reload_finished(self):
         self.statusbarLabel.setText(self.get_last_reload_time())
