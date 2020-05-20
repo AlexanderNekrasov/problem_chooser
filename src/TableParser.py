@@ -56,8 +56,8 @@ class Problem:
         self.verdicts = dict().fromkeys(ALLOWED_VERDICTS, 0)
         for (verdict, attempts) in zip(problem_verdicts, problem_attempts):
             self.attempts += max(0, attempts - 1)
+            self.verdicts[verdict] += 1
             if verdict != "NO":
-                self.verdicts[verdict] += 1
                 self.attempts += 1
 
     @property
@@ -66,8 +66,14 @@ class Problem:
         wa = sum((self.verdicts[v] for v in WA_VERDICTS))
         bad = sum((self.verdicts[v] for v in BAD_VERDICTS))
         invisible_attempts = self.attempts - sum((ok, wa, bad))
+        n_participants = sum(self.verdicts.values())
+
         score = 1.0 * ok ** 1.5 - 0.7 * wa - 1.0 * bad \
                                 - 0.1 * invisible_attempts
+
+        theory_max_score = n_participants ** 1.5
+        score = score / theory_max_score * 100
+
         return round(score, 1)
 
     def __lt__(self, other):
