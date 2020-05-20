@@ -47,7 +47,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.setCentralWidget(self.centralwidget)
 
         self.headerLabel = QtWidgets.QLabel(self.centralwidget)
-        self.headerLabel.setText("Найдите самые простые задачи для себя:")
+        self.headerLabel.setText("Найдите самые простые задачи для себя")
 
         self.reloadButton = QtWidgets.QPushButton("Обновить")
         self.reloadButton.clicked.connect(self.reload_table)
