@@ -47,9 +47,9 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.setCentralWidget(self.centralwidget)
 
         self.headerLabel = QtWidgets.QLabel(self.centralwidget)
-        self.headerLabel.setText("Find the easiest problems for you")
+        self.headerLabel.setText("Найдите самые простые задачи для себя")
 
-        self.reloadButton = QtWidgets.QPushButton("Reload")
+        self.reloadButton = QtWidgets.QPushButton("Обновить")
         self.reloadButton.clicked.connect(self.reload_table)
 
         self.header = QtWidgets.QHBoxLayout()
@@ -58,7 +58,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
 
         self.lineEdit = QtWidgets.QLineEdit()
         self.lineEdit.textChanged.connect(self.update_table)
-        self.lineEdit.setPlaceholderText("Input your name here")
+        self.lineEdit.setPlaceholderText("Введите ваше имя")
 
         self.table = RowSpanTableWidget(3)
         self.table.doubleClicked.connect(self.double_clicked)
@@ -72,18 +72,18 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.menubar = QtWidgets.QMenuBar(self)
         self.setMenuBar(self.menubar)
 
-        self.reloadSubmenu = QtWidgets.QAction("Reload (~5 sec)")
+        self.reloadSubmenu = QtWidgets.QAction("Обновить (~5 сек)")
         self.reloadSubmenu.setShortcut("Ctrl+R")
         self.reloadSubmenu.triggered.connect(self.reload_table)
 
-        self.tableMenu = self.menubar.addMenu("&Table")
+        self.tableMenu = self.menubar.addMenu("&Результаты")
         self.tableMenu.addAction(self.reloadSubmenu)
 
-        self.helpSubmenu = QtWidgets.QAction("Help")
+        self.helpSubmenu = QtWidgets.QAction("О программе")
         self.helpSubmenu.setShortcut("Ctrl+H")
         self.helpSubmenu.triggered.connect(self.open_help)
 
-        self.helpMenu = self.menubar.addMenu("&Help")
+        self.helpMenu = self.menubar.addMenu("&Помощь")
         self.helpMenu.addAction(self.helpSubmenu)
 
         self.statusbar = QtWidgets.QStatusBar(self)
@@ -94,7 +94,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
 
         self.update_table()
 
-        self.statusbarLabel.setText(" Reloading... ")
+        self.statusbarLabel.setText(" Обновление... ")
         self.worker = Worker()
         self.worker(self.initParsers, self.on_reload_finished)
 
@@ -115,7 +115,8 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         if len(good_names) == 1:
             name = good_names[0]
             stat = self.tableParser.get_stat(name)
-            self.table.appendRow([1, 1, 1], ["Contest id", "Problem", "Score"])
+            self.table.appendRow([1, 1, 1],
+                                 ["Contest id", "Задача", "Простота"])
             for el in stat:
                 self.table.appendRow(
                     [1, 1, 1],
@@ -124,14 +125,14 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
                 self.table.lastRowItem(0).setToolTip(el.contest.name)
                 self.table.lastRowItem(1).setToolTip(el.full_name)
         elif len(good_names) == 0:
-            self.table.appendRow([3], ["NOT FOUND"])
+            self.table.appendRow([3], ["Не найдено"])
             self.table.item(0, 0).setTextAlignment(QtCore.Qt.AlignHCenter)
 
     def open_help(self):
         location = cfg.resource("help")
         with open(location, "r") as f:
             text = f.read()
-        QtWidgets.QMessageBox.about(self.centralwidget, "Help", text)
+        QtWidgets.QMessageBox.about(self.centralwidget, "О программе", text)
 
     def set_last_reload_time(self):
         self.statusbarLabel.setText(self.get_last_reload_time())
@@ -141,7 +142,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
             strtime = "undefined"
         else:
             strtime = self.tableParser.last_reload_time.strftime("%x %X")
-        return " Last reload: " + strtime + " "
+        return " Последнее обновление: " + strtime + " "
 
     def on_reload_finished(self):
         self.statusbarLabel.setText(self.get_last_reload_time())
@@ -152,7 +153,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         if self.tableParser.isReloading():
             print("Already reloading")
             return
-        self.statusbarLabel.setText(" Reloading... ")
+        self.statusbarLabel.setText(" Обновление... ")
         self.tableParser.reload(self.on_reload_finished)
         self.mainPageParser.reload()
 
