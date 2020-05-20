@@ -66,8 +66,9 @@ class Problem:
         wa = sum((self.verdicts[v] for v in WA_VERDICTS))
         bad = sum((self.verdicts[v] for v in BAD_VERDICTS))
         invisible_attempts = self.attempts - sum((ok, wa, bad))
-        score = 2.0 * ok - 0.7 * wa - 1.0 * bad - 0.1 * invisible_attempts
-        return round(score, 5)
+        score = 1.0 * ok ** 1.5 - 0.7 * wa - 1.0 * bad \
+                                - 0.1 * invisible_attempts
+        return round(score, 1)
 
     def __lt__(self, other):
         return (self.score, self.contest.id, self.id) < \
