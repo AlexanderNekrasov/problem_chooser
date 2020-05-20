@@ -48,8 +48,7 @@ class Contest:
 class Problem:
 
     def __init__(self, prob_id, contest, problem_verdicts, problem_attempts):
-        self.contest_id = contest.id
-        self.contest_name = contest.name
+        self.contest = contest
         self.id = prob_id
         self.short_name = contest.prob_short_name(prob_id)
         self.full_name = contest.prob_full_name(prob_id)
@@ -71,8 +70,8 @@ class Problem:
         return round(score, 5)
 
     def __lt__(self, other):
-        return (self.score, self.contest_id, self.id) < \
-               (other.score, other.contest_id, self.id)
+        return (self.score, self.contest.id, self.id) < \
+               (other.score, other.contest.id, self.id)
 
 
 class Participant:

@@ -119,9 +119,9 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
             for el in stat:
                 self.table.appendRow(
                     [1, 1, 1],
-                    tuple(map(str, [el.contest_id, el.short_name, el.score]))
+                    tuple(map(str, [el.contest.id, el.short_name, el.score]))
                 )
-                self.table.lastRowItem(0).setToolTip(el.contest_name)
+                self.table.lastRowItem(0).setToolTip(el.contest.name)
                 self.table.lastRowItem(1).setToolTip(el.full_name)
         elif len(good_names) == 0:
             self.table.appendRow([3], ["NOT FOUND"])
