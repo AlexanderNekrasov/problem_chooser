@@ -60,25 +60,23 @@ class Problem:
             if verdict != "NO":
                 self.attempts += 1
 
-    @property
-    def score(self):
+    def get_score(self, participant):
         ok = sum((self.verdicts[v] for v in OK_VERDICTS))
         wa = sum((self.verdicts[v] for v in WA_VERDICTS))
         bad = sum((self.verdicts[v] for v in BAD_VERDICTS))
         invisible_attempts = self.attempts - sum((ok, wa, bad))
+        participant_attempts = participant.attempts[self.id]
         n_participants = sum(self.verdicts.values())
 
         score = 1.0 * ok ** 1.5 - 0.7 * wa - 1.0 * bad \
-                                - 0.1 * invisible_attempts
+                                - 0.1 * invisible_attempts \
+                                - 0.2 * participant_attempts
 
         theory_max_score = n_participants ** 1.5
         score = score / theory_max_score * 100
 
-        return round(score, 1)
-
-    def __lt__(self, other):
-        return (self.score, self.contest.id, self.id) < \
-               (other.score, other.contest.id, self.id)
+        self.score = round(score, 1)
+        return self.score
 
 
 class Participant:
@@ -169,10 +167,14 @@ class TableParser(Parser):
         return list(self.participants.keys())
 
     def get_stat(self, name):
+        participant = self.participants[name]
         can_solve = []
-        for prob_id in self.participants[name].can_solve_problem_ids:
+        for prob_id in participant.can_solve_problem_ids:
             can_solve.append(self.problems[prob_id])
-        can_solve.sort(reverse=True)
+        can_solve.sort(reverse=True,
+                       key=lambda x: (x.get_score(participant),
+                                      x.contest.id,
+                                      x.id))
         return can_solve
 
     @staticmethod
