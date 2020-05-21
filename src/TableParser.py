@@ -72,8 +72,8 @@ class Problem:
                                 - 0.1 * invisible_attempts \
                                 - 0.2 * participant_attempts
 
-        theory_max_score = n_participants ** 1.5
-        score = score / theory_max_score * 100
+        theoretic_max_score = n_participants ** 1.5
+        score = score / theoretic_max_score * 100
 
         self.score = round(score, 1)
         return self.score
