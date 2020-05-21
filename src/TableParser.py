@@ -56,22 +56,27 @@ class Problem:
         self.verdicts = dict().fromkeys(ALLOWED_VERDICTS, 0)
         for (verdict, attempts) in zip(problem_verdicts, problem_attempts):
             self.attempts += max(0, attempts - 1)
+            self.verdicts[verdict] += 1
             if verdict != "NO":
-                self.verdicts[verdict] += 1
                 self.attempts += 1
 
-    @property
-    def score(self):
+    def get_score(self, participant):
         ok = sum((self.verdicts[v] for v in OK_VERDICTS))
         wa = sum((self.verdicts[v] for v in WA_VERDICTS))
         bad = sum((self.verdicts[v] for v in BAD_VERDICTS))
         invisible_attempts = self.attempts - sum((ok, wa, bad))
-        score = 2.0 * ok - 0.7 * wa - 1.0 * bad - 0.1 * invisible_attempts
-        return round(score, 5)
+        participant_attempts = participant.attempts[self.id]
+        n_participants = sum(self.verdicts.values())
 
-    def __lt__(self, other):
-        return (self.score, self.contest.id, self.id) < \
-               (other.score, other.contest.id, self.id)
+        score = 1.0 * ok ** 1.5 - 0.7 * wa - 1.0 * bad \
+                                - 0.1 * invisible_attempts \
+                                - 0.2 * participant_attempts
+
+        theoretic_max_score = n_participants ** 1.5
+        score = score / theoretic_max_score * 100
+
+        self.score = round(score, 1)
+        return self.score
 
 
 class Participant:
@@ -162,10 +167,14 @@ class TableParser(Parser):
         return list(self.participants.keys())
 
     def get_stat(self, name):
+        participant = self.participants[name]
         can_solve = []
-        for prob_id in self.participants[name].can_solve_problem_ids:
+        for prob_id in participant.can_solve_problem_ids:
             can_solve.append(self.problems[prob_id])
-        can_solve.sort(reverse=True)
+        can_solve.sort(reverse=True,
+                       key=lambda x: (x.get_score(participant),
+                                      x.contest.id,
+                                      x.id))
         return can_solve
 
     @staticmethod
