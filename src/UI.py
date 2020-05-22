@@ -116,7 +116,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
             name = good_names[0]
             stat = self.tableParser.get_stat(name)
             self.table.appendRow([1, 1, 1],
-                                 ["Contest id", "Задача", "Простота"])
+                                 ["id контеста", "Задача", "Простота"])
             for el in stat:
                 self.table.appendRow(
                     [1, 1, 1],
