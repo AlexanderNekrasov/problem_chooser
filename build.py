@@ -1,6 +1,7 @@
 import sys
 import os
-import subprocess
+import pip
+import PyInstaller.__main__ as pyinstaller
 import shutil
 import zipfile
 from pkg_resources import require, DistributionNotFound, VersionConflict
@@ -20,8 +21,7 @@ NAME = 'problem-chooser-v' + cfg.VERSION
 #                       INSTALL AND CHECK REQUIREMENTS                        #
 
 print("Checking and installing requirements.txt")
-subprocess.call(sys.executable + " -m pip install -r requirements.txt",
-                shell=True)
+pip.main("install -r requirements.txt".split())
 
 try:
     require(open('requirements.txt').read().strip().split('\n'))
@@ -43,15 +43,15 @@ shutil.rmtree('build', ignore_errors=True)
 shutil.rmtree('dist', ignore_errors=True)
 
 print("\nBUILDING...")
-exit_code = subprocess.call(
-    sys.executable + ' -m PyInstaller main.spec', shell=True)
-
-if exit_code:
+try:
+    pyinstaller.run(['main.spec'])
+except Exception:
     print("\nBUILDING FAILED")
-    sys.exit(exit_code)
+    sys.exit(1)
+else:
+    print('BUILD FINISHED')
 
 shutil.rmtree('build')
-
 filename = os.listdir('dist')[0]
 newfilename = filename.replace('main', 'problem-chooser')
 os.rename(os.path.join('dist', filename), os.path.join('dist', newfilename))
@@ -75,4 +75,4 @@ if MAKE_ZIP:
 #                                                                             #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-print("\nBuild complete")
+print("\nCompleted!")
