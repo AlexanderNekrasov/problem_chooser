@@ -139,7 +139,8 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         # init window
         help_window = QtWidgets.QDialog(self)
         help_window.setWindowTitle('О программе')
-        help_window.setMinimumSize(700, 600)
+        help_window.resize(700, 600)
+        help_window.setFixedWidth(625)
         help_window.setLayout(QtWidgets.QVBoxLayout())
         # title
         img = QtGui.QPixmap('resources/icon.ico')
@@ -161,6 +162,9 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         help_label = QtWidgets.QLabel(text)
         help_label.setFont(font)
         help_label.setWordWrap(True)
+        help_label.setAlignment(QtCore.Qt.AlignJustify)
+        scroll_help = QtWidgets.QScrollArea()
+        scroll_help.setWidget(help_label)
         # buttons
         buttons_layout = QtWidgets.QHBoxLayout()
         suggest_button = QtWidgets.QPushButton("Поддержать")
@@ -173,7 +177,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         buttons_layout.addWidget(ok_button, stretch=1)
         # add parts to window
         help_window.layout().addLayout(title_layout)
-        help_window.layout().addWidget(help_label)
+        help_window.layout().addWidget(scroll_help)
         help_window.layout().addLayout(buttons_layout)
         # show window
         help_window.exec_()
