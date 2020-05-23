@@ -115,7 +115,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
             name = good_names[0]
             stat = self.tableParser.get_stat(name)
             self.table.appendRow([1, 1, 1],
-                                 ["id контеста", "Задача", "Простота"])
+                                 ["ID контеста", "Задача", "Простота"])
             for el in stat:
                 self.table.appendRow(
                     [1, 1, 1],
@@ -128,12 +128,15 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
             self.table.item(0, 0).setTextAlignment(QtCore.Qt.AlignHCenter)
 
     def open_help(self):
-        location = cfg.resource("help")
-        with open(location, "r", encoding="utf-8") as f:
-            text = f.read()
-            indtitle = text.find('\n\n')
-            title = text[:indtitle]
-            text = text[indtitle + 2:]
+        with open(cfg.resource("help"), "r", encoding="utf-8") as f:
+            text = f.read().strip()
+        with open(cfg.resource("help-title"), "r", encoding="utf-8") as f:
+            title = f.read().strip()
+        with open(cfg.resource("help-suggest-link"),
+                  "r", encoding="utf-8") as f:
+            suggest_link = f.read().strip()
+
+        # init window
         help_window = QtWidgets.QDialog(self)
         help_window.setWindowTitle('О программе')
         help_window.setMinimumSize(700, 600)
@@ -161,16 +164,14 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         # buttons
         buttons_layout = QtWidgets.QHBoxLayout()
         suggest_button = QtWidgets.QPushButton("Поддержать")
-        suggest_button.clicked.connect(lambda: webbrowser.open(
-            'https://github.com/AlexanderNekrasov/problem_chooser#'
-            'как-поддержать-проект'))
+        suggest_button.clicked.connect(lambda: webbrowser.open(suggest_link))
         ok_button = QtWidgets.QPushButton("ОК")
         ok_button.clicked.connect(help_window.close)
         ok_button.setDefault(True)
         buttons_layout.addStretch(4)
         buttons_layout.addWidget(suggest_button, stretch=1)
         buttons_layout.addWidget(ok_button, stretch=1)
-        # add to window
+        # add parts to window
         help_window.layout().addLayout(title_layout)
         help_window.layout().addWidget(help_label)
         help_window.layout().addLayout(buttons_layout)
