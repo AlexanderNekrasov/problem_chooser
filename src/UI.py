@@ -76,7 +76,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.reloadSubmenu.setShortcut("Ctrl+R")
         self.reloadSubmenu.triggered.connect(self.reload_table)
 
-        self.tableMenu = self.menubar.addMenu("&Результаты")
+        self.tableMenu = self.menubar.addMenu("&Таблица")
         self.tableMenu.addAction(self.reloadSubmenu)
 
         self.helpSubmenu = QtWidgets.QAction("О программе")
@@ -130,7 +130,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
 
     def open_help(self):
         location = cfg.resource("help")
-        with open(location, "r") as f:
+        with open(location, "r", encoding="utf-8") as f:
             text = f.read()
         QtWidgets.QMessageBox.about(self.centralwidget, "О программе", text)
 

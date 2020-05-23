@@ -20,7 +20,8 @@ NAME = 'problem-chooser-v' + cfg.VERSION
 #                       INSTALL AND CHECK REQUIREMENTS                        #
 
 print("Checking and installing requirements.txt")
-subprocess.call(sys.executable + " -m pip install -r requirements.txt")
+subprocess.call(sys.executable + " -m pip install -r requirements.txt",
+                shell=True)
 
 try:
     require(open('requirements.txt').read().strip().split('\n'))
@@ -40,19 +41,21 @@ except Exception as ex:
 shutil.rmtree(NAME, ignore_errors=True)
 shutil.rmtree('build', ignore_errors=True)
 shutil.rmtree('dist', ignore_errors=True)
-if os.path.exists('main.spec'):
-    os.remove('main.spec')
 
 print("\nBUILDING...")
 exit_code = subprocess.call(
-    sys.executable + ' -m PyInstaller -F main.py --clean --noconsole \
-                      --add-data resources/help:resources')
+    sys.executable + ' -m PyInstaller main.spec', shell=True)
+# exit_code = subprocess.call(
+#     sys.executable + ' -m PyInstaller main.py --clean --noconsole\
+#                       --add-data "resources/help;resources" \
+#                       --add-data "resources/icon.ico;resources"', shell=True)
+
+
 if exit_code:
     print("\nBUILDING FAILED")
     sys.exit(exit_code)
 
 shutil.rmtree('build')
-os.remove('main.spec')
 
 filename = os.listdir('dist')[0]
 newfilename = filename.replace('main', 'problem-chooser')
