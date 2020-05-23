@@ -38,9 +38,8 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
 
         self.resize(600, 800)
 
-        font = QtGui.QFont()
+        font = self.font()
         font.setPixelSize(16)
-        font.setStyleHint(QtGui.QFont.Monospace)
         self.setFont(font)
 
         self.centralwidget = QtWidgets.QWidget(self)
@@ -60,7 +59,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.lineEdit.textChanged.connect(self.update_table)
         self.lineEdit.setPlaceholderText("Введите ваше имя")
 
-        self.table = RowSpanTableWidget(3)
+        self.table = RowSpanTableWidget(3, self)
         self.table.doubleClicked.connect(self.double_clicked)
 
         self.main_layout = QtWidgets.QVBoxLayout(self.centralwidget)
@@ -132,7 +131,51 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         location = cfg.resource("help")
         with open(location, "r", encoding="utf-8") as f:
             text = f.read()
-        QtWidgets.QMessageBox.about(self.centralwidget, "О программе", text)
+            indtitle = text.find('\n\n')
+            title = text[:indtitle]
+            text = text[indtitle + 2:]
+        help_window = QtWidgets.QDialog(self)
+        help_window.setWindowTitle('О программе')
+        help_window.setMinimumSize(700, 600)
+        help_window.setLayout(QtWidgets.QVBoxLayout())
+        # title
+        img = QtGui.QPixmap('resources/icon.ico')
+        title_layout = QtWidgets.QHBoxLayout()
+        img_label = QtWidgets.QLabel()
+        img_label.setPixmap(img)
+        title_layout.addWidget(img_label)
+        title_label = QtWidgets.QLabel(title)
+        font = self.font()
+        font.setPixelSize(24)
+        title_label.setFont(font)
+        title_layout.addStretch(1)
+        title_layout.addWidget(title_label)
+        title_layout.addStretch(2)
+        # body
+        font = self.font()
+        font.setPixelSize(15)
+        font.setFamily("Monospace")
+        help_label = QtWidgets.QLabel(text)
+        help_label.setFont(font)
+        help_label.setWordWrap(True)
+        # buttons
+        buttons_layout = QtWidgets.QHBoxLayout()
+        suggest_button = QtWidgets.QPushButton("Поддержать")
+        suggest_button.clicked.connect(lambda: webbrowser.open(
+            'https://github.com/AlexanderNekrasov/problem_chooser#'
+            'как-поддержать-проект'))
+        ok_button = QtWidgets.QPushButton("ОК")
+        ok_button.clicked.connect(help_window.close)
+        ok_button.setDefault(True)
+        buttons_layout.addStretch(4)
+        buttons_layout.addWidget(suggest_button, stretch=1)
+        buttons_layout.addWidget(ok_button, stretch=1)
+        # add to window
+        help_window.layout().addLayout(title_layout)
+        help_window.layout().addWidget(help_label)
+        help_window.layout().addLayout(buttons_layout)
+        # show window
+        help_window.exec_()
 
     def set_last_reload_time(self):
         self.statusbarLabel.setText(self.get_last_reload_time())
