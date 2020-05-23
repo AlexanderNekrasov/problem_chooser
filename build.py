@@ -45,11 +45,6 @@ shutil.rmtree('dist', ignore_errors=True)
 print("\nBUILDING...")
 exit_code = subprocess.call(
     sys.executable + ' -m PyInstaller main.spec', shell=True)
-# exit_code = subprocess.call(
-#     sys.executable + ' -m PyInstaller main.py --clean --noconsole\
-#                       --add-data "resources/help;resources" \
-#                       --add-data "resources/icon.ico;resources"', shell=True)
-
 
 if exit_code:
     print("\nBUILDING FAILED")
@@ -68,10 +63,13 @@ shutil.move('dist', NAME)
 
 if MAKE_ZIP:
     print("\nMaking zip")
-    with zipfile.ZipFile(NAME + '.zip', 'w') as z:
+    with zipfile.ZipFile(NAME + '.zip', 'w', zipfile.ZIP_DEFLATED) as z:
         for root, dirs, files in os.walk(NAME):
+            pth = os.path.join('.', *root.strip(os.sep).split(os.sep)[1:])
             for f in files:
-                z.write(os.path.join(root, f))
+                filezippath = os.path.join(pth, f)
+                print('Adding:', filezippath)
+                z.write(os.path.join(root, f), filezippath)
     shutil.move(NAME + '.zip', NAME)
 
 #                                                                             #
