@@ -39,7 +39,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.resize(600, 800)
 
         font = self.font()
-        font.setPixelSize(16)
+        font.setPixelSize(15)
         self.setFont(font)
 
         self.centralwidget = QtWidgets.QWidget(self)
