@@ -33,9 +33,9 @@ else:
     print('BUILD FINISHED')
 
 shutil.rmtree('build')
-filename = os.listdir('dist')[0]
-newfilename = filename.replace('main', 'problem-chooser')
-os.rename(os.path.join('dist', filename), os.path.join('dist', newfilename))
+dirname = os.listdir('dist')[0]
+newdirname = dirname.replace('main', 'problem-chooser')
+os.rename(os.path.join('dist', dirname), os.path.join('dist', newdirname))
 shutil.move('dist', NAME)
 
 #                                                                             #

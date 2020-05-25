@@ -8,9 +8,9 @@ from src.Worker import EMPTY_FUNCTION
 
 
 def get_cache_location(cls):
-    location = cfg.CACHE_LOCATIONS[cls.__name__]
-    location = appdirs.AppDirs(location).user_cache_dir
-    return location
+    rel_cache_location = cfg.CACHE_LOCATIONS[cls.__name__]
+    abs_cache_location = appdirs.AppDirs(rel_cache_location).user_cache_dir
+    return abs_cache_location
 
 
 class Parser:
