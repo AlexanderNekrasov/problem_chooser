@@ -35,8 +35,23 @@ else:
 shutil.rmtree('build')
 dirname = os.listdir('dist')[0]
 newdirname = dirname.replace('main', 'problem-chooser')
-os.rename(os.path.join('dist', dirname), os.path.join('dist', newdirname))
+shutil.move(os.path.join('dist', dirname), os.path.join('dist', newdirname))
 shutil.move('dist', NAME)
+
+#                                                                             #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+#                             MOVING FILES TO LIB                             #
+
+exec_path = os.path.join(NAME, newdirname)
+lib_path = os.path.join(exec_path, "lib")
+os.makedirs(lib_path)
+
+NEEDED_FILES = ["lib", "PyQt5", "certifi", "resources", "base_library.zip",
+                "main.exe", "python37.dll"]
+for name in os.listdir(exec_path):
+    if name not in NEEDED_FILES:
+        print("Moving", os.path.join(exec_path, name), "to lib")
+        shutil.move(os.path.join(exec_path, name), lib_path)
 
 #                                                                             #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
