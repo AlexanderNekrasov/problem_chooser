@@ -142,6 +142,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         help_window.resize(700, 600)
         help_window.setFixedWidth(625)
         help_window.setLayout(QtWidgets.QVBoxLayout())
+
         # title
         img = QtGui.QPixmap('resources/icon.ico')
         title_layout = QtWidgets.QHBoxLayout()
@@ -155,6 +156,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         title_layout.addStretch(1)
         title_layout.addWidget(title_label)
         title_layout.addStretch(2)
+
         # body
         font = self.font()
         font.setPixelSize(15)
@@ -165,6 +167,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         help_label.setAlignment(QtCore.Qt.AlignJustify)
         scroll_help = QtWidgets.QScrollArea()
         scroll_help.setWidget(help_label)
+
         # buttons
         buttons_layout = QtWidgets.QHBoxLayout()
         suggest_button = QtWidgets.QPushButton("Поддержать")
@@ -175,10 +178,12 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         buttons_layout.addStretch(4)
         buttons_layout.addWidget(suggest_button, stretch=1)
         buttons_layout.addWidget(ok_button, stretch=1)
+
         # add parts to window
         help_window.layout().addLayout(title_layout)
         help_window.layout().addWidget(scroll_help)
         help_window.layout().addLayout(buttons_layout)
+
         # show window
         help_window.exec_()
 
