@@ -1,10 +1,8 @@
 import sys
 import os
-import pip
 import PyInstaller.__main__ as pyinstaller
 import shutil
 import zipfile
-from pkg_resources import require, DistributionNotFound, VersionConflict
 import cfg
 
 
@@ -18,24 +16,6 @@ NAME = 'problem-chooser-v' + cfg.VERSION
 
 #                                                                             #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-#                       INSTALL AND CHECK REQUIREMENTS                        #
-
-print("Checking and installing requirements.txt")
-pip.main("install -r requirements.txt".split())
-
-try:
-    require(open('requirements.txt').read().strip().split('\n'))
-except (DistributionNotFound, VersionConflict) as ex:
-    print('Check requirements failed:')
-    print(' ', ex)
-    print('Try again')
-    exit(1)
-except Exception as ex:
-    print('Some errors found:\n')
-    raise ex
-
-#                                                                             #
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 #                           BUILD, CLEAN AND RENAME                           #
 
 shutil.rmtree(NAME, ignore_errors=True)
@@ -45,8 +25,9 @@ shutil.rmtree('dist', ignore_errors=True)
 print("\nBUILDING...")
 try:
     pyinstaller.run(['main.spec'])
-except Exception:
-    print("\nBUILDING FAILED")
+except Exception as ex:
+    print("\nBUILDING FAILED\n")
+    print(ex)
     sys.exit(1)
 else:
     print('BUILD FINISHED')
