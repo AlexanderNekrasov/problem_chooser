@@ -61,7 +61,7 @@ class Problem:
             if verdict != "NO":
                 self.attempts += 1
 
-    def calc_score(self, participant):
+    def prepare_score(self, participant):
         ok = sum((self.verdicts[v] for v in OK_VERDICTS))
         wa = sum((self.verdicts[v] for v in WA_VERDICTS))
         bad = sum((self.verdicts[v] for v in BAD_VERDICTS))
@@ -178,7 +178,7 @@ class TableParser(Parser):
         can_solve = []
         for prob_id in participant.can_solve_problem_ids:
             can_solve.append(self.problems[prob_id])
-            can_solve[-1].calc_score(participant)
+            can_solve[-1].prepare_score(participant)
         can_solve.sort(reverse=True)
         return can_solve
 
