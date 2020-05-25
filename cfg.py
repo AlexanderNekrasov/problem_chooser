@@ -1,7 +1,7 @@
 from os import path
 import sys
 
-VERSION = '1.79'
+VERSION = '2.0'
 
 TABLE_URL = 'https://server.179.ru/shashkov/stand_b22.php'
 MAIN_PAGE_URL = "https://server.179.ru/wiki/?page=Informatika/9B"

@@ -13,7 +13,7 @@
 Скачайте [отсюда](https://github.com/AlexanderNekrasov/problem_chooser/releases/latest) архив `problem-chooser-src.zip` и разархивируйте его.
 Зайдите в терминал и перейдите в директорию проекта. Исполните команду:
 ```
-python3 -m pip install requests>=2.23.0 beautifulsoup4>=4.9.0 PyQt5>=5.14.2 cachepath>=1.1.1
+python3 -m pip install requests>=2.23.0 beautifulsoup4>=4.9.0 PyQt5>=5.14.2 appdirs>=1.4.4
 ```
 Если всё завершилось успешно, то при запуске `main.py` у вас будет запускаться программа.
 
