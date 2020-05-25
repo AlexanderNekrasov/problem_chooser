@@ -38,9 +38,8 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
 
         self.resize(600, 800)
 
-        font = QtGui.QFont()
-        font.setPixelSize(16)
-        font.setStyleHint(QtGui.QFont.Monospace)
+        font = self.font()
+        font.setPixelSize(15)
         self.setFont(font)
 
         self.centralwidget = QtWidgets.QWidget(self)
@@ -60,7 +59,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.lineEdit.textChanged.connect(self.update_table)
         self.lineEdit.setPlaceholderText("Введите ваше имя")
 
-        self.table = RowSpanTableWidget(3)
+        self.table = RowSpanTableWidget(3, self)
         self.table.doubleClicked.connect(self.double_clicked)
 
         self.main_layout = QtWidgets.QVBoxLayout(self.centralwidget)
@@ -116,7 +115,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
             name = good_names[0]
             stat = self.tableParser.get_stat(name)
             self.table.appendRow([1, 1, 1],
-                                 ["id контеста", "Задача", "Простота"])
+                                 ["ID контеста", "Задача", "Простота"])
             for el in stat:
                 self.table.appendRow(
                     [1, 1, 1],
@@ -129,10 +128,64 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
             self.table.item(0, 0).setTextAlignment(QtCore.Qt.AlignHCenter)
 
     def open_help(self):
-        location = cfg.resource("help")
-        with open(location, "r", encoding="utf-8") as f:
-            text = f.read()
-        QtWidgets.QMessageBox.about(self.centralwidget, "О программе", text)
+        with open(cfg.resource("help"), "r", encoding="utf-8") as f:
+            text = f.read().strip()
+        with open(cfg.resource("help-title"), "r", encoding="utf-8") as f:
+            title = f.read().strip()
+        with open(cfg.resource("help-suggest-link"),
+                  "r", encoding="utf-8") as f:
+            suggest_link = f.read().strip()
+
+        # init window
+        help_window = QtWidgets.QDialog(self)
+        help_window.setWindowTitle('О программе')
+        help_window.resize(700, 600)
+        help_window.setFixedWidth(625)
+        help_window.setLayout(QtWidgets.QVBoxLayout())
+
+        # title
+        img = QtGui.QPixmap('resources/icon.ico')
+        title_layout = QtWidgets.QHBoxLayout()
+        img_label = QtWidgets.QLabel()
+        img_label.setPixmap(img)
+        title_layout.addWidget(img_label)
+        title_label = QtWidgets.QLabel(title)
+        font = self.font()
+        font.setPixelSize(24)
+        title_label.setFont(font)
+        title_layout.addStretch(1)
+        title_layout.addWidget(title_label)
+        title_layout.addStretch(2)
+
+        # body
+        font = self.font()
+        font.setPixelSize(15)
+        font.setFamily("Monospace")
+        help_label = QtWidgets.QLabel(text)
+        help_label.setFont(font)
+        help_label.setWordWrap(True)
+        help_label.setAlignment(QtCore.Qt.AlignJustify)
+        scroll_help = QtWidgets.QScrollArea()
+        scroll_help.setWidget(help_label)
+
+        # buttons
+        buttons_layout = QtWidgets.QHBoxLayout()
+        suggest_button = QtWidgets.QPushButton("Поддержать")
+        suggest_button.clicked.connect(lambda: webbrowser.open(suggest_link))
+        ok_button = QtWidgets.QPushButton("ОК")
+        ok_button.clicked.connect(help_window.close)
+        ok_button.setDefault(True)
+        buttons_layout.addStretch(4)
+        buttons_layout.addWidget(suggest_button, stretch=1)
+        buttons_layout.addWidget(ok_button, stretch=1)
+
+        # add parts to window
+        help_window.layout().addLayout(title_layout)
+        help_window.layout().addWidget(scroll_help)
+        help_window.layout().addLayout(buttons_layout)
+
+        # show window
+        help_window.exec_()
 
     def set_last_reload_time(self):
         self.statusbarLabel.setText(self.get_last_reload_time())
