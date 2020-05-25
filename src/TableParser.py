@@ -52,6 +52,7 @@ class Problem:
         self.id = prob_id
         self.short_name = contest.prob_short_name(prob_id)
         self.full_name = contest.prob_full_name(prob_id)
+        self.score = None
         self.attempts = 0
         self.verdicts = dict().fromkeys(ALLOWED_VERDICTS, 0)
         for (verdict, attempts) in zip(problem_verdicts, problem_attempts):
@@ -60,7 +61,7 @@ class Problem:
             if verdict != "NO":
                 self.attempts += 1
 
-    def get_score(self, participant):
+    def calc_score(self, participant):
         ok = sum((self.verdicts[v] for v in OK_VERDICTS))
         wa = sum((self.verdicts[v] for v in WA_VERDICTS))
         bad = sum((self.verdicts[v] for v in BAD_VERDICTS))
@@ -73,10 +74,15 @@ class Problem:
                                 - 0.2 * participant_attempts
 
         theoretic_max_score = n_participants ** 1.5
-        score = score / theoretic_max_score * 100
+        if theoretic_max_score > 0:
+            score = score / theoretic_max_score * 100
 
         self.score = round(score, 1)
         return self.score
+
+    def __lt__(self, other):
+        return (self.score, -self.contest.id, -self.id) < \
+               (other.score, -other.contest.id, -other.id)
 
 
 class Participant:
@@ -118,6 +124,7 @@ class TableParser(Parser):
         self.last_contest = last_contest
         self.last_reload_time = None
         self.participants = {}
+        self.problems = []
 
     def set_from_server(self):
         try:
@@ -171,10 +178,8 @@ class TableParser(Parser):
         can_solve = []
         for prob_id in participant.can_solve_problem_ids:
             can_solve.append(self.problems[prob_id])
-        can_solve.sort(reverse=True,
-                       key=lambda x: (x.get_score(participant),
-                                      x.contest.id,
-                                      x.id))
+            can_solve[-1].calc_score(participant)
+        can_solve.sort(reverse=True)
         return can_solve
 
     @staticmethod
