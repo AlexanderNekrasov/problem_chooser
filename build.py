@@ -4,6 +4,7 @@ import PyInstaller.__main__ as pyinstaller
 import shutil
 import zipfile
 import cfg
+from platform import architecture
 
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -12,7 +13,22 @@ import cfg
 args = sys.argv[1:]
 MAKE_ZIP = '--make-zip' in args
 
-NAME = 'problem-chooser-v' + cfg.VERSION
+if sys.platform in ('win32', 'cygwin'):
+    platform = 'win'
+elif sys.platform in ('linux',):
+    platform = 'linux'
+elif sys.platform in ('darwin',):
+    platform = 'mac'
+else:
+    platform = 'unknown'
+    print('Unknown platform:', sys.platform)
+    exit(0)
+print('Run on:', platform)
+
+spec_path = os.path.join('arch', platform + '.spec')
+NAME = 'problem-chooser-v' + cfg.VERSION + '-' + platform
+if platform == 'win':
+    NAME += architecture()[0][:2]
 
 #                                                                             #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -24,7 +40,7 @@ shutil.rmtree('dist', ignore_errors=True)
 
 print("\nBUILDING...")
 try:
-    pyinstaller.run(['main.spec'])
+    pyinstaller.run([spec_path])
 except Exception as ex:
     print("\nBUILDING FAILED\n")
     print(ex)
@@ -34,24 +50,27 @@ else:
 
 shutil.rmtree('build')
 dirname = os.listdir('dist')[0]
-newdirname = dirname.replace('main', 'problem-chooser')
-shutil.move(os.path.join('dist', dirname), os.path.join('dist', newdirname))
 shutil.move('dist', NAME)
 
 #                                                                             #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 #                             MOVING FILES TO LIB                             #
 
-exec_path = os.path.join(NAME, newdirname)
-lib_path = os.path.join(exec_path, "lib")
-os.makedirs(lib_path)
+if platform == 'win':
+    exec_path = os.path.join(NAME, dirname)
+    lib_path = os.path.join(exec_path, "lib")
+    os.makedirs(lib_path)
 
-NEEDED_FILES = ["lib", "PyQt5", "certifi", "resources", "base_library.zip",
-                "problem-chooser.exe", "python37.dll"]
-for name in os.listdir(exec_path):
-    if name not in NEEDED_FILES:
-        print("Moving", os.path.join(exec_path, name), "to lib")
-        shutil.move(os.path.join(exec_path, name), lib_path)
+    NEEDED_FILES = ["lib", "PyQt5", "certifi", "resources", "base_library.zip",
+                    "problem-chooser.exe", "python37.dll"]
+    for name in os.listdir(exec_path):
+        if name not in NEEDED_FILES:
+            print("Moving", os.path.join(exec_path, name), "to lib")
+            shutil.move(os.path.join(exec_path, name), lib_path)
+elif platform == 'linux':
+    pass  # OK!
+elif platform == 'mac':
+    pass
 
 #                                                                             #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
