@@ -47,7 +47,7 @@ lib_path = os.path.join(exec_path, "lib")
 os.makedirs(lib_path)
 
 NEEDED_FILES = ["lib", "PyQt5", "certifi", "resources", "base_library.zip",
-                "main.exe", "python37.dll"]
+                "problem-chooser.exe", "python37.dll"]
 for name in os.listdir(exec_path):
     if name not in NEEDED_FILES:
         print("Moving", os.path.join(exec_path, name), "to lib")
