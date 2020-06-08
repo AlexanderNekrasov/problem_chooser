@@ -90,7 +90,7 @@ class Participant:
     def __init__(self, tr):
         self.id = tr.find('td', {'class': 'rank'}).text
         self.all_name = tr.find('td', {'class': 'name'}).text
-        self.name = re.match(r'\w+? (.*)', self.all_name).group(1)
+        self.name = re.match(r'(\d.*? )?(.*)', self.all_name).group(2)
         self.solved = float(tr.find('td', {'class': 'solved'}).text)
         self.err_attempts = int(tr.find('td', {'class': 'err_attempts'}).text)
         self.verdicts = []
