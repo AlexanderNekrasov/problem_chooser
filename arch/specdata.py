@@ -5,6 +5,7 @@ import sys
 class Path:
     root = sys.path[0]
     resources = os.path.join(root, 'resources')
+    icon = os.path.join(resources, 'icon.icns')
     main = os.path.join(root, 'main.py')
     add_lib = os.path.join(root, 'arch', 'add_lib.py')
 
