@@ -5,13 +5,14 @@ import shutil
 import zipfile
 import cfg
 from platform import architecture
-
+import re
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 #                                GET ARGUMENTS                                #
 
 args = sys.argv[1:]
 MAKE_ZIP = '--make-zip' in args
+ADD_ICON = '--add-icon' in args
 
 if sys.platform in ('win32', 'cygwin'):
     platform = 'win'
@@ -51,26 +52,56 @@ else:
 shutil.rmtree('build')
 dirname = os.listdir('dist')[0]
 shutil.move('dist', NAME)
+if os.path.exists(os.path.join(NAME, 'dist')):
+    print('\nOOOPS!\nBug with "dist" instead of "problem-chooser"')
+    exit(1)
 
 #                                                                             #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 #                             MOVING FILES TO LIB                             #
 
 if platform == 'win':
-    exec_path = os.path.join(NAME, dirname)
-    lib_path = os.path.join(exec_path, "lib")
+    exec_loc = os.path.join(NAME, dirname)
+    exec_path = os.path.join(exec_loc, 'problem-chooser.exe')
+    lib_path = os.path.join(exec_loc, "lib")
     os.makedirs(lib_path)
 
     NEEDED_FILES = ["lib", "PyQt5", "certifi", "resources", "base_library.zip",
-                    "problem-chooser.exe", "python37.dll"]
-    for name in os.listdir(exec_path):
-        if name not in NEEDED_FILES:
-            print("Moving", os.path.join(exec_path, name), "to lib")
-            shutil.move(os.path.join(exec_path, name), lib_path)
+                    "problem-chooser.exe"]
+    NEEDED_REGEX = ["python.*"]
+    for name in os.listdir(exec_loc):
+        is_needed = name in NEEDED_FILES
+        for regex in NEEDED_REGEX:
+            is_needed |= re.fullmatch(regex, name) is not None
+        if not is_needed:
+            print("Moving", os.path.join(exec_loc, name), "to lib")
+            shutil.move(os.path.join(exec_loc, name), lib_path)
 elif platform == 'linux':
-    pass  # OK!
+    pass
 elif platform == 'mac':
     pass
+
+#                                                                             #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+#                              ADD ICON TO EXE                                #
+
+if ADD_ICON:
+    if platform == 'win':
+        print("\nAdding icon")
+        from subprocess import call
+
+        rh_args = ['ResourceHacker.exe',
+                   '-open', exec_path,
+                   '-save', exec_path,
+                   '-action', 'addskip',
+                   '-res', cfg.resource('icon.ico'),
+                   '-mask', 'ICONGROUP,MAINICON']
+        return_code = call(' '.join(rh_args))
+        if return_code:
+            print('ResourceHacker error')
+            exit(return_code)
+    else:
+        print("--add-icon doesn't make sense on " + platform)
 
 #                                                                             #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
