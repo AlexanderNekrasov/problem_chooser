@@ -15,7 +15,9 @@ COMPILED = hasattr(sys, 'frozen') and hasattr(sys, '_MEIPASS')
 def resource(*args):
     relative_path = path.join('resources', *args)
     if COMPILED:
-        base_path = path.join(sys._MEIPASS, "..")
+        base_path = path.join(sys._MEIPASS,
+                              ".." if sys.platform not in ["darwin", "linux"]
+                              else ".")
     else:
         base_path = path.abspath(".")
     return path.join(base_path, relative_path)
