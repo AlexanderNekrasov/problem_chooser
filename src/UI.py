@@ -158,6 +158,8 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         title_layout.addStretch(2)
 
         # body
+        fontDB = QtGui.QFontDatabase()
+        fontDB.addApplicationFont(cfg.resource('monospace.ttf'))
         font = self.font()
         font.setPixelSize(15)
         font.setFamily("Monospace")
