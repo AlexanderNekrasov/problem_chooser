@@ -1,13 +1,27 @@
 from os import path
 import sys
+import appdirs
 
 VERSION = '2.0'
 
 TABLE_URL = 'https://server.179.ru/shashkov/stand_b22.php'
 MAIN_PAGE_URL = "https://server.179.ru/wiki/?page=Informatika/9B"
 
-CACHE_LOCATIONS = {'TableParser': path.join('problem_chooser', 'saved_table'),
-                   'MainPageParser': path.join('problem_chooser', 'main_page')}
+
+def user_cache_dir(s):
+    return appdirs.AppDirs(s).user_cache_dir
+
+
+def user_data_dir(s):
+    return appdirs.AppDirs(s).user_data_dir
+
+
+CACHE_LOCATIONS = {'TableParser':
+                   user_cache_dir(path.join('problem_chooser', 'saved_table')),
+                   'MainPageParser':
+                   user_cache_dir(path.join('problem_chooser', 'main_page'))}
+
+CONFIG_LOCATION = user_data_dir(path.join('problem_chooser', 'config.json'))
 
 COMPILED = hasattr(sys, 'frozen') and hasattr(sys, '_MEIPASS')
 

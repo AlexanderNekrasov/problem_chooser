@@ -1,6 +1,5 @@
 import _pickle as cPickle
 import gzip
-import appdirs
 import os
 
 import cfg
@@ -8,9 +7,8 @@ from src.Worker import EMPTY_FUNCTION
 
 
 def get_cache_location(cls):
-    rel_cache_location = cfg.CACHE_LOCATIONS[cls.__name__]
-    abs_cache_location = appdirs.AppDirs(rel_cache_location).user_cache_dir
-    return abs_cache_location
+    cache_location = cfg.CACHE_LOCATIONS[cls.__name__]
+    return cache_location
 
 
 class Parser:

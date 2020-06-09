@@ -6,6 +6,7 @@ from src.MainPageParser import MainPageParser
 from src.RowSpanTableWidget import RowSpanTableWidget
 from src.TableParser import TableParser
 from src.Worker import Worker
+from src.Config import config, save_config, reset_config
 
 
 def initParser(parserClass):
@@ -23,8 +24,9 @@ def initParser(parserClass):
 
 class Ui_MainWindow(QtWidgets.QMainWindow):
 
-    def __init__(self):
+    def __init__(self, app):
         super().__init__()
+        self.app = app
         self.tableParser = TableParser()
         self.mainPageParser = MainPageParser()
         self.setupUi()
@@ -73,6 +75,16 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
 
         self.tableMenu = self.menubar.addMenu("&Таблица")
         self.tableMenu.addAction(self.reloadSubmenu)
+
+        self.configSubmenu = QtWidgets.QAction("Шрифт")
+        self.configSubmenu.triggered.connect(self.open_font_config)
+
+        self.resetSubmenu = QtWidgets.QAction("Сбросить")
+        self.resetSubmenu.triggered.connect(self.reset_config)
+
+        self.configMenu = self.menubar.addMenu("&Настройки")
+        self.configMenu.addAction(self.configSubmenu)
+        self.configMenu.addAction(self.resetSubmenu)
 
         self.helpSubmenu = QtWidgets.QAction("О программе")
         self.helpSubmenu.setShortcut("Ctrl+H")
@@ -131,7 +143,6 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         with open(cfg.resource("help-suggest-link"),
                   "r", encoding="utf-8") as f:
             suggest_link = f.read().strip()
-
         # init window
         help_window = QtWidgets.QDialog(self)
         help_window.setWindowTitle('О программе')
@@ -146,17 +157,14 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         title_layout.addWidget(img_label)
         title_label = QtWidgets.QLabel(title)
         font = self.font()
-        font.setPointSize(20)
+        font.setPointSize(config["title_font_size"])
         title_label.setFont(font)
         title_layout.addStretch(1)
         title_layout.addWidget(title_label)
         title_layout.addStretch(2)
 
         # body
-        font = self.font()
-        font.setPointSize(10)
         help_label = QtWidgets.QLabel(text)
-        help_label.setFont(font)
         help_label.setWordWrap(True)
         scroll_help = QtWidgets.QScrollArea()
         scroll_help.setWidget(help_label)
@@ -224,3 +232,62 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
             url = self.mainPageParser.get_results_url_by_id(cells[0].text())
             if url is not None:
                 webbrowser.open(url)
+
+    @staticmethod
+    def font_config_item(name, pretty_name):
+        layout = QtWidgets.QHBoxLayout()
+        label = QtWidgets.QLabel(pretty_name)
+        layout.addWidget(label, stretch=1)
+        spin_box = QtWidgets.QSpinBox()
+        spin_box.setRange(3, 50)
+        spin_box.setValue(config[name])
+        layout.addWidget(spin_box)
+        return layout, spin_box.value
+
+    def update_font(self):
+        font = self.font()
+        font.setPointSize(config["main_font_size"])
+        self.app.setFont(font)
+
+    def save_font_size(self, main_font_size, title_font_size):
+        global config
+        config["main_font_size"] = main_font_size
+        config["title_font_size"] = title_font_size
+        self.update_font()
+        save_config()
+
+    def reset_config(self):
+        global config
+        config = reset_config()
+        save_config()
+        self.update_font()
+
+    def open_font_config(self):
+        font_config_window = QtWidgets.QDialog(self)
+        font_config_window.setWindowTitle("Настройки шрифта")
+        font_config_window.setLayout(QtWidgets.QVBoxLayout())
+        font_config_window.layout().addWidget(
+                QtWidgets.QLabel("Выберите размеры шрифтов"))
+        lay, get_main_font_size = self.font_config_item("main_font_size",
+                                                        "Основной шрифт:")
+        font_config_window.layout().addLayout(lay)
+        lay, get_title_font_size = self.font_config_item("title_font_size",
+                                                         "Шрифт заголовков:")
+        font_config_window.layout().addLayout(lay)
+        ok_button = QtWidgets.QPushButton("Сохранить")
+
+        def save():
+            self.save_font_size(get_main_font_size(), get_title_font_size())
+            font_config_window.close()
+
+        ok_button.clicked.connect(save)
+        ok_button.setDefault(True)
+        cancel_button = QtWidgets.QPushButton("Отменить")
+        cancel_button.clicked.connect(font_config_window.close)
+        buttons = [cancel_button, ok_button]
+        buttons_layout = QtWidgets.QHBoxLayout()
+        for b in buttons:
+            buttons_layout.addWidget(b)
+        font_config_window.layout().addLayout(buttons_layout)
+
+        font_config_window.exec_()
