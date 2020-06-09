@@ -6,7 +6,8 @@
 
 ## Как установить
 
-##### Windows, Linux, Mac OS:
+Приложение доступно только для систем Windows, Linux и Mac OS.
+
 Скачайте [отсюда](https://github.com/AlexanderNekrasov/problem_chooser/releases/latest) архив `problem-chooser-vXX-OS.zip` для своей операционной системы. 
 
 После разархивации появится файл `problem-chooser` (с расширением для вашей операционной системы). 
