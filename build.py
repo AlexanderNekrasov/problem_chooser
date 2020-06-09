@@ -99,6 +99,8 @@ if ADD_ICON:
 #                                  MAKE ZIP                                   #
 
 if MAKE_ZIP:
+    if cfg.platform == 'mac':
+        shutil.rmtree(os.path.join(NAME, dirname))
     print("\nMaking zip")
     with zipfile.ZipFile(NAME + '.zip', 'w', zipfile.ZIP_DEFLATED) as z:
         for root, dirs, files in os.walk(NAME):
