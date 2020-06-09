@@ -4,15 +4,25 @@ import PyInstaller.__main__ as pyinstaller
 import shutil
 import zipfile
 import cfg
-
+from platform import architecture
+import re
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 #                                GET ARGUMENTS                                #
 
 args = sys.argv[1:]
 MAKE_ZIP = '--make-zip' in args
+ADD_ICON = '--add-icon' in args
 
-NAME = 'problem-chooser-v' + cfg.VERSION
+if cfg.platform == 'unknown':
+    print('Unknown platform:', sys.platform)
+    exit(0)
+print('Run on:', cfg.platform)
+
+spec_path = os.path.join('arch', cfg.platform + '.spec')
+NAME = 'problem-chooser-v' + cfg.VERSION + '-' + cfg.platform
+if cfg.platform == 'win':
+    NAME += architecture()[0][:2]
 
 #                                                                             #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -24,7 +34,7 @@ shutil.rmtree('dist', ignore_errors=True)
 
 print("\nBUILDING...")
 try:
-    pyinstaller.run(['main.spec'])
+    pyinstaller.run([spec_path])
 except Exception as ex:
     print("\nBUILDING FAILED\n")
     print(ex)
@@ -34,24 +44,55 @@ else:
 
 shutil.rmtree('build')
 dirname = os.listdir('dist')[0]
-newdirname = dirname.replace('main', 'problem-chooser')
-shutil.move(os.path.join('dist', dirname), os.path.join('dist', newdirname))
 shutil.move('dist', NAME)
+if os.path.exists(os.path.join(NAME, 'dist')):
+    print('\nOOOPS!\nBug with "dist" instead of "problem-chooser"')
+    exit(1)
 
 #                                                                             #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 #                             MOVING FILES TO LIB                             #
 
-exec_path = os.path.join(NAME, newdirname)
-lib_path = os.path.join(exec_path, "lib")
-os.makedirs(lib_path)
+if cfg.platform == 'win':
+    exec_loc = os.path.join(NAME, dirname)
+    exec_path = os.path.join(exec_loc, 'problem-chooser.exe')
+    lib_path = os.path.join(exec_loc, "lib")
+    os.makedirs(lib_path)
 
-NEEDED_FILES = ["lib", "PyQt5", "certifi", "resources", "base_library.zip",
-                "problem-chooser.exe", "python37.dll"]
-for name in os.listdir(exec_path):
-    if name not in NEEDED_FILES:
-        print("Moving", os.path.join(exec_path, name), "to lib")
-        shutil.move(os.path.join(exec_path, name), lib_path)
+    NEEDED_FILES = ["lib", "PyQt5", "certifi", "resources", "base_library.zip",
+                    "problem-chooser.exe"]
+    NEEDED_REGEX = ["python.*"]
+    for name in os.listdir(exec_loc):
+        is_needed = name in NEEDED_FILES
+        for regex in NEEDED_REGEX:
+            is_needed |= re.fullmatch(regex, name) is not None
+        if not is_needed:
+            print("Moving", os.path.join(exec_loc, name), "to lib")
+            shutil.move(os.path.join(exec_loc, name), lib_path)
+    shutil.move(os.path.join(exec_loc, 'PyQt5', 'Qt', 'plugins', 'platforms'),
+                os.path.join(exec_loc, 'platforms'))
+
+#                                                                             #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+#                              ADD ICON TO EXE                                #
+
+if ADD_ICON:
+    if cfg.platform == 'win':
+        print("\nAdding icon")
+        from subprocess import call
+
+        rh_args = ['ResourceHacker.exe',
+                   '-open', exec_path,
+                   '-save', exec_path,
+                   '-action', 'addskip',
+                   '-res', cfg.resource('icon.ico'),
+                   '-mask', 'ICONGROUP,MAINICON']
+        return_code = call(' '.join(rh_args))
+        if return_code:
+            print('ResourceHacker error')
+            exit(return_code)
+    else:
+        print("--add-icon doesn't make sense on " + cfg.platform)
 
 #                                                                             #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

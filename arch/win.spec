@@ -1,19 +1,15 @@
 # -*- mode: python ; coding: utf-8 -*-
-import sys
+from arch import specdata
 
 block_cipher = None
 
-
-a = Analysis(['main.py'],
-             pathex=[sys.path[0]],
+a = Analysis([specdata.Path.main],
+             pathex=[specdata.Path.root],
              binaries=[],
-             datas=[('resources/help', 'resources'),
-                    ('resources/help-title', 'resources'),
-                    ('resources/help-suggest-link', 'resources'),
-                    ('resources/icon.ico', 'resources')],
+             datas=specdata.datas,
              hiddenimports=[],
              hookspath=[],
-             runtime_hooks=["add_lib.py"],
+             runtime_hooks=[specdata.Path.add_lib],
              excludes=[],
              win_no_prefer_redirects=False,
              win_private_assemblies=False,
@@ -38,4 +34,4 @@ coll = COLLECT(exe,
                strip=False,
                upx=True,
                upx_exclude=[],
-               name='main')
+               name='problem-chooser')

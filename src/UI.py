@@ -36,11 +36,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
     def setupUi(self):
         self.setWindowTitle("Problem Chooser v" + cfg.VERSION)
 
-        self.resize(600, 800)
-
-        font = self.font()
-        font.setPixelSize(15)
-        self.setFont(font)
+        self.resize(500, 600)
 
         self.centralwidget = QtWidgets.QWidget(self)
         self.setCentralWidget(self.centralwidget)
@@ -139,34 +135,29 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         # init window
         help_window = QtWidgets.QDialog(self)
         help_window.setWindowTitle('О программе')
-        help_window.resize(700, 600)
-        help_window.setFixedWidth(625)
+        help_window.resize(self.width() + 50, 600)
         help_window.setLayout(QtWidgets.QVBoxLayout())
 
         # title
-        img = QtGui.QPixmap('resources/icon.ico')
+        img = QtGui.QPixmap(cfg.resource('icon.ico'))
         title_layout = QtWidgets.QHBoxLayout()
         img_label = QtWidgets.QLabel()
         img_label.setPixmap(img)
         title_layout.addWidget(img_label)
         title_label = QtWidgets.QLabel(title)
         font = self.font()
-        font.setPixelSize(24)
+        font.setPointSize(20)
         title_label.setFont(font)
         title_layout.addStretch(1)
         title_layout.addWidget(title_label)
         title_layout.addStretch(2)
 
         # body
-        fontDB = QtGui.QFontDatabase()
-        fontDB.addApplicationFont(cfg.resource('monospace.ttf'))
         font = self.font()
-        font.setPixelSize(15)
-        font.setFamily("Monospace")
+        font.setPointSize(10)
         help_label = QtWidgets.QLabel(text)
         help_label.setFont(font)
         help_label.setWordWrap(True)
-        help_label.setAlignment(QtCore.Qt.AlignJustify)
         scroll_help = QtWidgets.QScrollArea()
         scroll_help.setWidget(help_label)
 
@@ -185,6 +176,8 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         help_window.layout().addLayout(title_layout)
         help_window.layout().addWidget(scroll_help)
         help_window.layout().addLayout(buttons_layout)
+        help_window.resizeEvent = lambda *args: help_label.setFixedWidth(
+            help_window.width() - 50)
 
         # show window
         help_window.exec_()
