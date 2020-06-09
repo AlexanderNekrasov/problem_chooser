@@ -144,7 +144,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         help_window.setLayout(QtWidgets.QVBoxLayout())
 
         # title
-        img = QtGui.QPixmap('resources/icon.ico')
+        img = QtGui.QPixmap(cfg.resource('icon.ico'))
         title_layout = QtWidgets.QHBoxLayout()
         img_label = QtWidgets.QLabel()
         img_label.setPixmap(img)
