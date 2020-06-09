@@ -14,21 +14,14 @@ args = sys.argv[1:]
 MAKE_ZIP = '--make-zip' in args
 ADD_ICON = '--add-icon' in args
 
-if sys.platform in ('win32', 'cygwin'):
-    platform = 'win'
-elif sys.platform in ('linux',):
-    platform = 'linux'
-elif sys.platform in ('darwin',):
-    platform = 'mac'
-else:
-    platform = 'unknown'
+if cfg.platform == 'unknown':
     print('Unknown platform:', sys.platform)
     exit(0)
-print('Run on:', platform)
+print('Run on:', cfg.platform)
 
-spec_path = os.path.join('arch', platform + '.spec')
-NAME = 'problem-chooser-v' + cfg.VERSION + '-' + platform
-if platform == 'win':
+spec_path = os.path.join('arch', cfg.platform + '.spec')
+NAME = 'problem-chooser-v' + cfg.VERSION + '-' + cfg.platform
+if cfg.platform == 'win':
     NAME += architecture()[0][:2]
 
 #                                                                             #
@@ -60,7 +53,7 @@ if os.path.exists(os.path.join(NAME, 'dist')):
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 #                             MOVING FILES TO LIB                             #
 
-if platform == 'win':
+if cfg.platform == 'win':
     exec_loc = os.path.join(NAME, dirname)
     exec_path = os.path.join(exec_loc, 'problem-chooser.exe')
     lib_path = os.path.join(exec_loc, "lib")
@@ -78,17 +71,13 @@ if platform == 'win':
             shutil.move(os.path.join(exec_loc, name), lib_path)
     shutil.move(os.path.join(exec_loc, 'PyQt5', 'Qt', 'plugins', 'platforms'),
                 os.path.join(exec_loc, 'platforms'))
-elif platform == 'linux':
-    pass
-elif platform == 'mac':
-    pass
 
 #                                                                             #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 #                              ADD ICON TO EXE                                #
 
 if ADD_ICON:
-    if platform == 'win':
+    if cfg.platform == 'win':
         print("\nAdding icon")
         from subprocess import call
 
@@ -103,7 +92,7 @@ if ADD_ICON:
             print('ResourceHacker error')
             exit(return_code)
     else:
-        print("--add-icon doesn't make sense on " + platform)
+        print("--add-icon doesn't make sense on " + cfg.platform)
 
 #                                                                             #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
