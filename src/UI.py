@@ -36,7 +36,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
     def setupUi(self):
         self.setWindowTitle("Problem Chooser v" + cfg.VERSION)
 
-        self.resize(600, 800)
+        self.resize(500, 600)
 
         self.centralwidget = QtWidgets.QWidget(self)
         self.setCentralWidget(self.centralwidget)
