@@ -76,6 +76,8 @@ if platform == 'win':
         if not is_needed:
             print("Moving", os.path.join(exec_loc, name), "to lib")
             shutil.move(os.path.join(exec_loc, name), lib_path)
+    shutil.move(os.path.join(exec_loc, 'PyQt5', 'Qt', 'plugins', 'platforms'),
+                os.path.join(exec_loc, 'platforms'))
 elif platform == 'linux':
     pass
 elif platform == 'mac':
