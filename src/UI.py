@@ -248,17 +248,19 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         font = self.font()
         font.setPointSize(config["main_font_size"])
         self.app.setFont(font)
+        self.update_table()
 
     def save_font_size(self, main_font_size, title_font_size):
         global config
         config["main_font_size"] = main_font_size
         config["title_font_size"] = title_font_size
-        self.update_font()
         save_config()
+        self.update_font()
 
     def reset_config(self):
         global config
-        config = reset_config()
+        config.clear()
+        config.update(reset_config())
         save_config()
         self.update_font()
 
@@ -267,7 +269,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         font_config_window.setWindowTitle("Настройки шрифта")
         font_config_window.setLayout(QtWidgets.QVBoxLayout())
         font_config_window.layout().addWidget(
-                QtWidgets.QLabel("Выберите размеры шрифтов"))
+            QtWidgets.QLabel("Выберите размеры шрифтов"))
         lay, get_main_font_size = self.font_config_item("main_font_size",
                                                         "Основной шрифт:")
         font_config_window.layout().addLayout(lay)

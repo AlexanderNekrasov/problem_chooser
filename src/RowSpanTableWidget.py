@@ -19,6 +19,7 @@ class RowSpanTableWidget(QtWidgets.QTableWidget):
             raise Exception('Wrong format of spans and/or texts')
         ind = self.rowCount()
         self.insertRow(ind)
+        self.setRowHeight(ind, QtWidgets.QLabel().fontMetrics().height())
         jnd = 0
         for cell_size, text in zip(spans, texts):
             if cell_size > 1:
