@@ -6,6 +6,7 @@ from src.MainPageParser import MainPageParser
 from src.RowSpanTableWidget import RowSpanTableWidget
 from src.TableParser import TableParser
 from src.Worker import Worker
+from src.Config import config, save_config, reset_config
 
 
 def initParser(parserClass):
@@ -23,8 +24,9 @@ def initParser(parserClass):
 
 class Ui_MainWindow(QtWidgets.QMainWindow):
 
-    def __init__(self):
+    def __init__(self, app):
         super().__init__()
+        self.app = app
         self.tableParser = TableParser()
         self.mainPageParser = MainPageParser()
         self.setupUi()
@@ -36,20 +38,15 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
     def setupUi(self):
         self.setWindowTitle("Problem Chooser v" + cfg.VERSION)
 
-        self.resize(600, 800)
-
-        font = QtGui.QFont()
-        font.setPixelSize(16)
-        font.setStyleHint(QtGui.QFont.Monospace)
-        self.setFont(font)
+        self.resize(500, 600)
 
         self.centralwidget = QtWidgets.QWidget(self)
         self.setCentralWidget(self.centralwidget)
 
         self.headerLabel = QtWidgets.QLabel(self.centralwidget)
-        self.headerLabel.setText("Find the easiest problems for you")
+        self.headerLabel.setText("Найдите самые простые задачи для себя")
 
-        self.reloadButton = QtWidgets.QPushButton("Reload")
+        self.reloadButton = QtWidgets.QPushButton("Обновить")
         self.reloadButton.clicked.connect(self.reload_table)
 
         self.header = QtWidgets.QHBoxLayout()
@@ -58,9 +55,9 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
 
         self.lineEdit = QtWidgets.QLineEdit()
         self.lineEdit.textChanged.connect(self.update_table)
-        self.lineEdit.setPlaceholderText("Input your name here")
+        self.lineEdit.setPlaceholderText("Введите ваше имя")
 
-        self.table = RowSpanTableWidget(3)
+        self.table = RowSpanTableWidget(3, self)
         self.table.doubleClicked.connect(self.double_clicked)
 
         self.main_layout = QtWidgets.QVBoxLayout(self.centralwidget)
@@ -72,18 +69,28 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.menubar = QtWidgets.QMenuBar(self)
         self.setMenuBar(self.menubar)
 
-        self.reloadSubmenu = QtWidgets.QAction("Reload (~5 sec)")
+        self.reloadSubmenu = QtWidgets.QAction("Обновить (~5 сек)")
         self.reloadSubmenu.setShortcut("Ctrl+R")
         self.reloadSubmenu.triggered.connect(self.reload_table)
 
-        self.tableMenu = self.menubar.addMenu("&Table")
+        self.tableMenu = self.menubar.addMenu("&Таблица")
         self.tableMenu.addAction(self.reloadSubmenu)
 
-        self.helpSubmenu = QtWidgets.QAction("Help")
+        self.configSubmenu = QtWidgets.QAction("Шрифт")
+        self.configSubmenu.triggered.connect(self.open_font_config)
+
+        self.resetSubmenu = QtWidgets.QAction("Сбросить")
+        self.resetSubmenu.triggered.connect(self.reset_config)
+
+        self.configMenu = self.menubar.addMenu("&Настройки")
+        self.configMenu.addAction(self.configSubmenu)
+        self.configMenu.addAction(self.resetSubmenu)
+
+        self.helpSubmenu = QtWidgets.QAction("О программе")
         self.helpSubmenu.setShortcut("Ctrl+H")
         self.helpSubmenu.triggered.connect(self.open_help)
 
-        self.helpMenu = self.menubar.addMenu("&Help")
+        self.helpMenu = self.menubar.addMenu("&Помощь")
         self.helpMenu.addAction(self.helpSubmenu)
 
         self.statusbar = QtWidgets.QStatusBar(self)
@@ -94,7 +101,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
 
         self.update_table()
 
-        self.statusbarLabel.setText(" Reloading... ")
+        self.statusbarLabel.setText(" Обновление... ")
         self.worker = Worker()
         self.worker(self.initParsers, self.on_reload_finished)
 
@@ -115,23 +122,73 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         if len(good_names) == 1:
             name = good_names[0]
             stat = self.tableParser.get_stat(name)
-            self.table.appendRow([1, 1, 1], ["Contest id", "Problem", "Score"])
+            self.table.appendRow([1, 1, 1],
+                                 ["ID контеста", "Задача", "Простота"])
             for el in stat:
                 self.table.appendRow(
                     [1, 1, 1],
-                    tuple(map(str, [el.contest_id, el.short_name, el.score]))
+                    tuple(map(str, [el.contest.id, el.short_name, el.score]))
                 )
-                self.table.lastRowItem(0).setToolTip(el.contest_name)
+                self.table.lastRowItem(0).setToolTip(el.contest.name)
                 self.table.lastRowItem(1).setToolTip(el.full_name)
         elif len(good_names) == 0:
-            self.table.appendRow([3], ["NOT FOUND"])
+            self.table.appendRow([3], ["Не найдено"])
             self.table.item(0, 0).setTextAlignment(QtCore.Qt.AlignHCenter)
 
     def open_help(self):
-        location = cfg.resource("help")
-        with open(location, "r") as f:
-            text = f.read()
-        QtWidgets.QMessageBox.about(self.centralwidget, "Help", text)
+        with open(cfg.resource("help"), "r", encoding="utf-8") as f:
+            text = f.read().strip()
+        with open(cfg.resource("help-title"), "r", encoding="utf-8") as f:
+            title = f.read().strip()
+        with open(cfg.resource("help-suggest-link"),
+                  "r", encoding="utf-8") as f:
+            suggest_link = f.read().strip()
+        # init window
+        help_window = QtWidgets.QDialog(self)
+        help_window.setWindowTitle('О программе')
+        help_window.resize(self.width() + 50, 600)
+        help_window.setLayout(QtWidgets.QVBoxLayout())
+
+        # title
+        img = QtGui.QPixmap(cfg.resource('icon.ico'))
+        title_layout = QtWidgets.QHBoxLayout()
+        img_label = QtWidgets.QLabel()
+        img_label.setPixmap(img)
+        title_layout.addWidget(img_label)
+        title_label = QtWidgets.QLabel(title)
+        font = self.font()
+        font.setPointSize(config["title_font_size"])
+        title_label.setFont(font)
+        title_layout.addStretch(1)
+        title_layout.addWidget(title_label)
+        title_layout.addStretch(2)
+
+        # body
+        help_label = QtWidgets.QLabel(text)
+        help_label.setWordWrap(True)
+        scroll_help = QtWidgets.QScrollArea()
+        scroll_help.setWidget(help_label)
+
+        # buttons
+        buttons_layout = QtWidgets.QHBoxLayout()
+        suggest_button = QtWidgets.QPushButton("Поддержать")
+        suggest_button.clicked.connect(lambda: webbrowser.open(suggest_link))
+        ok_button = QtWidgets.QPushButton("ОК")
+        ok_button.clicked.connect(help_window.close)
+        ok_button.setDefault(True)
+        buttons_layout.addStretch(4)
+        buttons_layout.addWidget(suggest_button, stretch=1)
+        buttons_layout.addWidget(ok_button, stretch=1)
+
+        # add parts to window
+        help_window.layout().addLayout(title_layout)
+        help_window.layout().addWidget(scroll_help)
+        help_window.layout().addLayout(buttons_layout)
+        help_window.resizeEvent = lambda *args: help_label.setFixedWidth(
+            help_window.width() - 50)
+
+        # show window
+        help_window.exec_()
 
     def set_last_reload_time(self):
         self.statusbarLabel.setText(self.get_last_reload_time())
@@ -141,7 +198,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
             strtime = "undefined"
         else:
             strtime = self.tableParser.last_reload_time.strftime("%x %X")
-        return " Last reload: " + strtime + " "
+        return " Последнее обновление: " + strtime + " "
 
     def on_reload_finished(self):
         self.statusbarLabel.setText(self.get_last_reload_time())
@@ -152,7 +209,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         if self.tableParser.isReloading():
             print("Already reloading")
             return
-        self.statusbarLabel.setText(" Reloading... ")
+        self.statusbarLabel.setText(" Обновление... ")
         self.tableParser.reload(self.on_reload_finished)
         self.mainPageParser.reload()
 
@@ -175,3 +232,62 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
             url = self.mainPageParser.get_results_url_by_id(cells[0].text())
             if url is not None:
                 webbrowser.open(url)
+
+    @staticmethod
+    def font_config_item(name, pretty_name):
+        layout = QtWidgets.QHBoxLayout()
+        label = QtWidgets.QLabel(pretty_name)
+        layout.addWidget(label, stretch=1)
+        spin_box = QtWidgets.QSpinBox()
+        spin_box.setRange(3, 50)
+        spin_box.setValue(config[name])
+        layout.addWidget(spin_box)
+        return layout, spin_box.value
+
+    def update_font(self):
+        font = self.font()
+        font.setPointSize(config["main_font_size"])
+        self.app.setFont(font)
+        self.update_table()
+
+    def save_font_size(self, main_font_size, title_font_size):
+        config["main_font_size"] = main_font_size
+        config["title_font_size"] = title_font_size
+        save_config()
+        self.update_font()
+
+    def reset_config(self):
+        config.clear()
+        config.update(reset_config())
+        save_config()
+        self.update_font()
+
+    def open_font_config(self):
+        font_config_window = QtWidgets.QDialog(self)
+        font_config_window.setWindowTitle("Настройки шрифта")
+        font_config_window.setLayout(QtWidgets.QVBoxLayout())
+        font_config_window.layout().addWidget(
+            QtWidgets.QLabel("Выберите размеры шрифтов"))
+        lay, get_main_font_size = self.font_config_item("main_font_size",
+                                                        "Основной шрифт:")
+        font_config_window.layout().addLayout(lay)
+        lay, get_title_font_size = self.font_config_item("title_font_size",
+                                                         "Шрифт заголовков:")
+        font_config_window.layout().addLayout(lay)
+        ok_button = QtWidgets.QPushButton("Сохранить")
+
+        def save():
+            self.save_font_size(get_main_font_size(), get_title_font_size())
+            font_config_window.close()
+
+        ok_button.clicked.connect(save)
+        ok_button.setDefault(True)
+        cancel_button = QtWidgets.QPushButton("Отменить")
+        cancel_button.clicked.connect(font_config_window.close)
+        buttons = [cancel_button, ok_button]
+        buttons_layout = QtWidgets.QHBoxLayout()
+        for b in buttons:
+            buttons_layout.addWidget(b)
+        font_config_window.layout().addLayout(buttons_layout)
+
+        font_config_window.exec_()

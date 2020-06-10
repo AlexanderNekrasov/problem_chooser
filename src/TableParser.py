@@ -48,31 +48,41 @@ class Contest:
 class Problem:
 
     def __init__(self, prob_id, contest, problem_verdicts, problem_attempts):
-        self.contest_id = contest.id
-        self.contest_name = contest.name
+        self.contest = contest
         self.id = prob_id
         self.short_name = contest.prob_short_name(prob_id)
         self.full_name = contest.prob_full_name(prob_id)
+        self.score = None
         self.attempts = 0
         self.verdicts = dict().fromkeys(ALLOWED_VERDICTS, 0)
         for (verdict, attempts) in zip(problem_verdicts, problem_attempts):
             self.attempts += max(0, attempts - 1)
+            self.verdicts[verdict] += 1
             if verdict != "NO":
-                self.verdicts[verdict] += 1
                 self.attempts += 1
 
-    @property
-    def score(self):
+    def prepare_score(self, participant):
         ok = sum((self.verdicts[v] for v in OK_VERDICTS))
         wa = sum((self.verdicts[v] for v in WA_VERDICTS))
         bad = sum((self.verdicts[v] for v in BAD_VERDICTS))
         invisible_attempts = self.attempts - sum((ok, wa, bad))
-        score = 2.0 * ok - 0.7 * wa - 1.0 * bad - 0.1 * invisible_attempts
-        return round(score, 5)
+        participant_attempts = participant.attempts[self.id]
+        n_participants = sum(self.verdicts.values())
+
+        score = 1.0 * ok ** 1.5 - 0.7 * wa - 1.0 * bad \
+                                - 0.1 * invisible_attempts \
+                                - 0.2 * participant_attempts
+
+        theoretic_max_score = n_participants ** 1.5
+        if theoretic_max_score > 0:
+            score = score / theoretic_max_score * 100
+
+        self.score = round(score, 1)
+        return self.score
 
     def __lt__(self, other):
-        return (self.score, self.contest_id, self.id) < \
-               (other.score, other.contest_id, self.id)
+        return (self.score, -self.contest.id, -self.id) < \
+               (other.score, -other.contest.id, -other.id)
 
 
 class Participant:
@@ -80,7 +90,7 @@ class Participant:
     def __init__(self, tr):
         self.id = tr.find('td', {'class': 'rank'}).text
         self.all_name = tr.find('td', {'class': 'name'}).text
-        self.name = re.match(r'\w+? (.*)', self.all_name).group(1)
+        self.name = re.match(r'(\d.*? )?(.*)', self.all_name).group(2)
         self.solved = float(tr.find('td', {'class': 'solved'}).text)
         self.err_attempts = int(tr.find('td', {'class': 'err_attempts'}).text)
         self.verdicts = []
@@ -114,6 +124,7 @@ class TableParser(Parser):
         self.last_contest = last_contest
         self.last_reload_time = None
         self.participants = {}
+        self.problems = []
 
     def set_from_server(self):
         try:
@@ -163,9 +174,11 @@ class TableParser(Parser):
         return list(self.participants.keys())
 
     def get_stat(self, name):
+        participant = self.participants[name]
         can_solve = []
-        for prob_id in self.participants[name].can_solve_problem_ids:
+        for prob_id in participant.can_solve_problem_ids:
             can_solve.append(self.problems[prob_id])
+            can_solve[-1].prepare_score(participant)
         can_solve.sort(reverse=True)
         return can_solve
 
