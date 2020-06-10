@@ -103,8 +103,10 @@ if MAKE_ZIP:
         shutil.rmtree(os.path.join(NAME, dirname))
     print("\nMaking zip")
     with zipfile.ZipFile(NAME + '.zip', 'w', zipfile.ZIP_DEFLATED) as z:
-        for root, dirs, files in os.walk(NAME):
+        for root, dirs, files in os.walk(NAME, followlinks=True):
             pth = os.path.join('.', *root.strip(os.sep).split(os.sep)[1:])
+            print("Adding:", pth)
+            z.write(root, pth)
             for f in files:
                 filezippath = os.path.join(pth, f)
                 print('Adding:', filezippath)
