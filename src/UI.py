@@ -251,14 +251,12 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.update_table()
 
     def save_font_size(self, main_font_size, title_font_size):
-        global config
         config["main_font_size"] = main_font_size
         config["title_font_size"] = title_font_size
         save_config()
         self.update_font()
 
     def reset_config(self):
-        global config
         config.clear()
         config.update(reset_config())
         save_config()
