@@ -76,15 +76,15 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.tableMenu = self.menubar.addMenu("&Таблица")
         self.tableMenu.addAction(self.reloadSubmenu)
 
-        self.configSubmenu = QtWidgets.QAction("Шрифт")
-        self.configSubmenu.triggered.connect(self.open_font_config)
+        self.configFontSubmenu = QtWidgets.QAction("Шрифт")
+        self.configFontSubmenu.triggered.connect(self.open_font_config)
 
-        self.resetSubmenu = QtWidgets.QAction("Сбросить")
-        self.resetSubmenu.triggered.connect(self.reset_config)
+        self.configResetSubmenu = QtWidgets.QAction("Сбросить")
+        self.configResetSubmenu.triggered.connect(self.reset_config)
 
         self.configMenu = self.menubar.addMenu("&Настройки")
-        self.configMenu.addAction(self.configSubmenu)
-        self.configMenu.addAction(self.resetSubmenu)
+        self.configMenu.addAction(self.configFontSubmenu)
+        self.configMenu.addAction(self.configResetSubmenu)
 
         self.helpSubmenu = QtWidgets.QAction("О программе")
         self.helpSubmenu.setShortcut("Ctrl+H")
@@ -261,7 +261,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         return layout, spin_box.value
 
     def update_font(self):
-        font = self.settings_font.font()
+        font = self.font()
         font.setPointSize(config["main_font_size"])
         self.app.setFont(font)
         self.update_table()
