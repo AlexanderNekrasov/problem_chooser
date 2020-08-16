@@ -105,6 +105,35 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.worker = Worker()
         self.worker(self.initParsers, self.on_reload_finished)
 
+    def reset_config(self):
+        config.clear()
+        config.update(reset_config())
+        save_config()
+        self.update_font()
+
+    def double_clicked(self):
+        item = self.table.currentItem()
+        if item.text() in self.tableParser.get_names():
+            self.lineEdit.setText(item.text())
+            return
+        cells = self.table.getRow(item.row())
+        if item.column() == 0:
+            url = self.mainPageParser.get_contest_url_by_id(cells[0].text())
+            if url is not None:
+                webbrowser.open(url)
+        elif item.column() == 1:
+            url = self.mainPageParser.get_statements_url_by_id(cells[0].text())
+            if url is not None:
+                url += "#prob_" + item.text()
+                webbrowser.open(url)
+        elif item.column() == 2:
+            url = self.mainPageParser.get_results_url_by_id(cells[0].text())
+            if url is not None:
+                webbrowser.open(url)
+
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+    # # # # # # # # # # # # # # #  RELOAD TABLE   # # # # # # # # # # # # # # #
+
     def update_table(self):
         name = self.lineEdit.text().lower()
         names = self.tableParser.get_names()
@@ -134,6 +163,32 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         elif len(good_names) == 0:
             self.table.appendRow([3], ["Не найдено"])
             self.table.item(0, 0).setTextAlignment(QtCore.Qt.AlignHCenter)
+
+    def set_last_reload_time(self):
+        self.statusbarLabel.setText(self.get_last_reload_time())
+
+    def get_last_reload_time(self):
+        if self.tableParser.last_reload_time is None:
+            strtime = "undefined"
+        else:
+            strtime = self.tableParser.last_reload_time.strftime("%x %X")
+        return " Последнее обновление: " + strtime + " "
+
+    def on_reload_finished(self):
+        self.statusbarLabel.setText(self.get_last_reload_time())
+        self.set_last_reload_time()
+        self.update_table()
+
+    def reload_table(self):
+        if self.tableParser.isReloading():
+            print("Already reloading")
+            return
+        self.statusbarLabel.setText(" Обновление... ")
+        self.tableParser.reload(self.on_reload_finished)
+        self.mainPageParser.reload()
+
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+    # # # # # # # # # # # # # # # # #  HELP   # # # # # # # # # # # # # # # # #
 
     def open_help(self):
         with open(cfg.resource("help"), "r", encoding="utf-8") as f:
@@ -172,7 +227,8 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         # buttons
         buttons_layout = QtWidgets.QHBoxLayout()
         suggest_button = QtWidgets.QPushButton("Поддержать")
-        suggest_button.clicked.connect(lambda: webbrowser.open(suggest_link))
+        suggest_button.clicked.connect(
+            lambda: webbrowser.open(suggest_link))
         ok_button = QtWidgets.QPushButton("ОК")
         ok_button.clicked.connect(help_window.close)
         ok_button.setDefault(True)
@@ -190,48 +246,8 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         # show window
         help_window.exec_()
 
-    def set_last_reload_time(self):
-        self.statusbarLabel.setText(self.get_last_reload_time())
-
-    def get_last_reload_time(self):
-        if self.tableParser.last_reload_time is None:
-            strtime = "undefined"
-        else:
-            strtime = self.tableParser.last_reload_time.strftime("%x %X")
-        return " Последнее обновление: " + strtime + " "
-
-    def on_reload_finished(self):
-        self.statusbarLabel.setText(self.get_last_reload_time())
-        self.set_last_reload_time()
-        self.update_table()
-
-    def reload_table(self):
-        if self.tableParser.isReloading():
-            print("Already reloading")
-            return
-        self.statusbarLabel.setText(" Обновление... ")
-        self.tableParser.reload(self.on_reload_finished)
-        self.mainPageParser.reload()
-
-    def double_clicked(self):
-        item = self.table.currentItem()
-        if item.text() in self.tableParser.get_names():
-            self.lineEdit.setText(item.text())
-            return
-        cells = self.table.getRow(item.row())
-        if item.column() == 0:
-            url = self.mainPageParser.get_contest_url_by_id(cells[0].text())
-            if url is not None:
-                webbrowser.open(url)
-        elif item.column() == 1:
-            url = self.mainPageParser.get_statements_url_by_id(cells[0].text())
-            if url is not None:
-                url += "#prob_" + item.text()
-                webbrowser.open(url)
-        elif item.column() == 2:
-            url = self.mainPageParser.get_results_url_by_id(cells[0].text())
-            if url is not None:
-                webbrowser.open(url)
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+    # # # # # # # # # # # # # # #  FONT SETTINGS  # # # # # # # # # # # # # # #
 
     @staticmethod
     def font_config_item(name, pretty_name):
@@ -245,7 +261,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         return layout, spin_box.value
 
     def update_font(self):
-        font = self.font()
+        font = self.settings_font.font()
         font.setPointSize(config["main_font_size"])
         self.app.setFont(font)
         self.update_table()
@@ -253,12 +269,6 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
     def save_font_size(self, main_font_size, title_font_size):
         config["main_font_size"] = main_font_size
         config["title_font_size"] = title_font_size
-        save_config()
-        self.update_font()
-
-    def reset_config(self):
-        config.clear()
-        config.update(reset_config())
         save_config()
         self.update_font()
 
