@@ -79,11 +79,16 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.configFontSubmenu = QtWidgets.QAction("Шрифт")
         self.configFontSubmenu.triggered.connect(self.open_font_config)
 
+        self.configAutoinputSubmenu = QtWidgets.QAction("Автоввод имени")
+        self.configAutoinputSubmenu.triggered.connect(
+            self.open_autoinput_config)
+
         self.configResetSubmenu = QtWidgets.QAction("Сбросить")
         self.configResetSubmenu.triggered.connect(self.reset_config)
 
         self.configMenu = self.menubar.addMenu("&Настройки")
         self.configMenu.addAction(self.configFontSubmenu)
+        self.configMenu.addAction(self.configAutoinputSubmenu)
         self.configMenu.addAction(self.configResetSubmenu)
 
         self.helpSubmenu = QtWidgets.QAction("О программе")
@@ -105,11 +110,17 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.worker = Worker()
         self.worker(self.initParsers, self.on_reload_finished)
 
+        self.load_autoinput()
+
     def reset_config(self):
         config.clear()
         config.update(reset_config())
         save_config()
         self.update_font()
+
+    def closeEvent(self, event):
+        self.save_autoinput_last_text()
+        event.accept()
 
     def double_clicked(self):
         item = self.table.currentItem()
@@ -301,3 +312,74 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         font_config_window.layout().addLayout(buttons_layout)
 
         font_config_window.exec_()
+
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+    # # # # # # # # # # # # # # AUTO INPUT SETTINGS # # # # # # # # # # # # # #
+
+    def load_autoinput(self):
+        if config["is_autoinput_last"]:
+            text = config["autoinput_last"]
+        else:
+            text = config["autoinput_text"]
+        self.lineEdit.setText(text)
+
+    @staticmethod
+    def save_autoinput(line, checkBox):
+        config["is_autoinput_last"] = checkBox.isChecked()
+        config["autoinput_text"] = line.text()
+        save_config()
+
+    def save_autoinput_last_text(self):
+        config["autoinput_last"] = self.lineEdit.text()
+        save_config()
+
+    def open_autoinput_config(self):
+        font_size = config["main_font_size"]
+
+        window = QtWidgets.QDialog(self)
+        window.setWindowTitle("Автоввод имени")
+        window.setLayout(QtWidgets.QVBoxLayout())
+        description = QtWidgets.QLabel("Введите, что будет автоматически \
+подставляться в строку ввода при входе в программу:")
+        description.setWordWrap(True)
+
+        line = QtWidgets.QLineEdit(config["autoinput_text"])
+        line.setPlaceholderText("Введите имя")
+
+        def checkbox_clicked(state):
+            line.setDisabled(state == QtCore.Qt.Checked)
+
+        checkBox = QtWidgets.QCheckBox()
+        checkBox.stateChanged.connect(checkbox_clicked)
+        checkBox_size = int(font_size * 1.25)
+        checkBox.setStyleSheet(  # set size
+            f'QCheckBox::indicator {{ width: {checkBox_size}px; \
+                                      height: {checkBox_size}px; }}')
+        checkBox.setChecked(config["is_autoinput_last"])
+
+        input_last = QtWidgets.QHBoxLayout()
+        input_last.addWidget(QtWidgets.QLabel("Подставлять последний ввод?"))
+        input_last.addStretch(1)
+        input_last.addSpacing(font_size)
+        input_last.addWidget(checkBox)
+
+        window.layout().addWidget(description)
+        window.layout().addWidget(line)
+        window.layout().addLayout(input_last)
+
+        def save():
+            self.save_autoinput(line, checkBox)
+            window.close()
+
+        ok_button = QtWidgets.QPushButton("Сохранить")
+        ok_button.clicked.connect(save)
+        ok_button.setDefault(True)
+        cancel_button = QtWidgets.QPushButton("Отменить")
+        cancel_button.clicked.connect(window.close)
+        buttons = [cancel_button, ok_button]
+        buttons_layout = QtWidgets.QHBoxLayout()
+        for b in buttons:
+            buttons_layout.addWidget(b)
+        window.layout().addLayout(buttons_layout)
+
+        window.exec_()
