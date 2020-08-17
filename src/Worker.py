@@ -30,6 +30,7 @@ class Worker(QtCore.QThread):
             self.signals.finished.emit()
 
     def __call__(self, _worker_function, _worker_finished, *args, **kwargs):
+        self.__init__()
         self.function = _worker_function
         self.signals.finished.connect(_worker_finished)
         self.args = args
