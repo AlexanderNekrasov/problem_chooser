@@ -119,7 +119,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.update_font()
 
     def closeEvent(self, event):
-        self.save_autoinput_last_text()
+        self.save_autoinput_last()
         event.accept()
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -328,7 +328,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         config["autoinput_text"] = line.text()
         save_config()
 
-    def save_autoinput_last_text(self):
+    def save_autoinput_last(self):
         config["autoinput_last"] = self.lineEdit.text()
         save_config()
 
@@ -337,12 +337,6 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         window = QtWidgets.QDialog(self)
         window.setWindowTitle("Автоввод имени")
         window.setLayout(QtWidgets.QVBoxLayout())
-        description = QtWidgets.QLabel("Введите, что будет автоматически \
-подставляться в строку ввода при входе в программу:")
-        description.setWordWrap(True)
-
-        line = QtWidgets.QLineEdit(config["autoinput_text"])
-        line.setPlaceholderText("Введите имя")
 
         def checkbox_clicked(state):
             line.setDisabled(state == QtCore.Qt.Checked)
@@ -356,14 +350,16 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         checkBox.setChecked(config["is_autoinput_last"])
 
         input_last = QtWidgets.QHBoxLayout()
-        input_last.addWidget(QtWidgets.QLabel("Подставлять последний ввод?"))
+        input_last.addWidget(QtWidgets.QLabel("Запоминать последнее имя?"))
         input_last.addStretch(1)
-        input_last.addSpacing(font_size)
+        input_last.addSpacing(font_size * 5)
         input_last.addWidget(checkBox)
 
-        window.layout().addWidget(description)
-        window.layout().addWidget(line)
+        line = QtWidgets.QLineEdit(config["autoinput_text"])
+        line.setPlaceholderText("Имя по умолчанию")
+
         window.layout().addLayout(input_last)
+        window.layout().addWidget(line)
 
         def save():
             self.save_autoinput(line, checkBox)
