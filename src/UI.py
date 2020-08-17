@@ -79,11 +79,16 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.configFontSubmenu = QtWidgets.QAction("Шрифт")
         self.configFontSubmenu.triggered.connect(self.open_font_config)
 
+        self.configAutoinputSubmenu = QtWidgets.QAction("Автоввод имени")
+        self.configAutoinputSubmenu.triggered.connect(
+            self.open_autoinput_config)
+
         self.configResetSubmenu = QtWidgets.QAction("Сбросить")
         self.configResetSubmenu.triggered.connect(self.reset_config)
 
         self.configMenu = self.menubar.addMenu("&Настройки")
         self.configMenu.addAction(self.configFontSubmenu)
+        self.configMenu.addAction(self.configAutoinputSubmenu)
         self.configMenu.addAction(self.configResetSubmenu)
 
         self.helpSubmenu = QtWidgets.QAction("О программе")
@@ -105,11 +110,20 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.worker = Worker()
         self.worker(self.initParsers, self.on_reload_finished)
 
+        self.load_autoinput()
+
     def reset_config(self):
         config.clear()
         config.update(reset_config())
         save_config()
         self.update_font()
+
+    def closeEvent(self, event):
+        self.save_autoinput_last()
+        event.accept()
+
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+    # # # # # # # # # # # # # # # # #  TABLE  # # # # # # # # # # # # # # # # #
 
     def double_clicked(self):
         item = self.table.currentItem()
@@ -130,9 +144,6 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
             url = self.mainPageParser.get_results_url_by_id(cells[0].text())
             if url is not None:
                 webbrowser.open(url)
-
-    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-    # # # # # # # # # # # # # # #  RELOAD TABLE   # # # # # # # # # # # # # # #
 
     def update_table(self):
         name = self.lineEdit.text().lower()
@@ -249,17 +260,6 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # # # # # # # # # # # # # # #  FONT SETTINGS  # # # # # # # # # # # # # # #
 
-    @staticmethod
-    def font_config_item(name, pretty_name):
-        layout = QtWidgets.QHBoxLayout()
-        label = QtWidgets.QLabel(pretty_name)
-        layout.addWidget(label, stretch=1)
-        spin_box = QtWidgets.QSpinBox()
-        spin_box.setRange(3, 50)
-        spin_box.setValue(config[name])
-        layout.addWidget(spin_box)
-        return layout, spin_box.value
-
     def update_font(self):
         font = self.font()
         font.setPointSize(config["main_font_size"])
@@ -273,31 +273,107 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.update_font()
 
     def open_font_config(self):
-        font_config_window = QtWidgets.QDialog(self)
-        font_config_window.setWindowTitle("Настройки шрифта")
-        font_config_window.setLayout(QtWidgets.QVBoxLayout())
-        font_config_window.layout().addWidget(
-            QtWidgets.QLabel("Выберите размеры шрифтов"))
-        lay, get_main_font_size = self.font_config_item("main_font_size",
-                                                        "Основной шрифт:")
-        font_config_window.layout().addLayout(lay)
-        lay, get_title_font_size = self.font_config_item("title_font_size",
-                                                         "Шрифт заголовков:")
-        font_config_window.layout().addLayout(lay)
-        ok_button = QtWidgets.QPushButton("Сохранить")
+        def font_config_item(name, pretty_name):
+            layout = QtWidgets.QHBoxLayout()
+            label = QtWidgets.QLabel(pretty_name)
+            layout.addWidget(label, stretch=1)
+            spin_box = QtWidgets.QSpinBox()
+            spin_box.setRange(3, 50)
+            spin_box.setValue(config[name])
+            layout.addWidget(spin_box)
+            return layout, spin_box.value
+
+        window = QtWidgets.QDialog(self)
+        window.setWindowTitle("Настройки шрифта")
+        window.setLayout(QtWidgets.QVBoxLayout())
+
+        lay, get_main_font_size = font_config_item("main_font_size",
+                                                   "Основной шрифт:")
+        lay, get_title_font_size = font_config_item("title_font_size",
+                                                    "Шрифт заголовков:")
+        window.layout().addWidget(QtWidgets.QLabel("Выберите размеры шрифтов"))
+        window.layout().addLayout(lay)
+        window.layout().addLayout(lay)
 
         def save():
             self.save_font_size(get_main_font_size(), get_title_font_size())
-            font_config_window.close()
+            window.close()
 
+        ok_button = QtWidgets.QPushButton("Сохранить")
         ok_button.clicked.connect(save)
         ok_button.setDefault(True)
         cancel_button = QtWidgets.QPushButton("Отменить")
-        cancel_button.clicked.connect(font_config_window.close)
+        cancel_button.clicked.connect(window.close)
         buttons = [cancel_button, ok_button]
         buttons_layout = QtWidgets.QHBoxLayout()
         for b in buttons:
             buttons_layout.addWidget(b)
-        font_config_window.layout().addLayout(buttons_layout)
+        window.layout().addLayout(buttons_layout)
 
-        font_config_window.exec_()
+        window.exec_()
+
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+    # # # # # # # # # # # # # # AUTO INPUT SETTINGS # # # # # # # # # # # # # #
+
+    def load_autoinput(self):
+        if config["is_autoinput_last"]:
+            text = config["autoinput_last"]
+        else:
+            text = config["autoinput_text"]
+        self.lineEdit.setText(text)
+
+    @staticmethod
+    def save_autoinput(line, checkBox):
+        config["is_autoinput_last"] = checkBox.isChecked()
+        config["autoinput_text"] = line.text()
+        save_config()
+
+    def save_autoinput_last(self):
+        config["autoinput_last"] = self.lineEdit.text()
+        save_config()
+
+    def open_autoinput_config(self):
+        font_size = config["main_font_size"]
+        window = QtWidgets.QDialog(self)
+        window.setWindowTitle("Автоввод имени")
+        window.setLayout(QtWidgets.QVBoxLayout())
+
+        def checkbox_clicked(state):
+            line.setDisabled(state == QtCore.Qt.Checked)
+
+        checkBox = QtWidgets.QCheckBox()
+        checkBox.stateChanged.connect(checkbox_clicked)
+        checkBox_size = int(font_size * 1.25)
+        checkBox.setStyleSheet(  # set size
+            f'QCheckBox::indicator {{ width: {checkBox_size}px; \
+                                      height: {checkBox_size}px; }}')
+        checkBox.setChecked(config["is_autoinput_last"])
+
+        input_last = QtWidgets.QHBoxLayout()
+        input_last.addWidget(QtWidgets.QLabel("Запоминать последнее имя?"))
+        input_last.addStretch(1)
+        input_last.addSpacing(font_size * 5)
+        input_last.addWidget(checkBox)
+
+        line = QtWidgets.QLineEdit(config["autoinput_text"])
+        line.setPlaceholderText("Имя по умолчанию")
+
+        window.layout().addLayout(input_last)
+        window.layout().addWidget(line)
+
+        def save():
+            self.save_autoinput(line, checkBox)
+            window.close()
+
+        ok_button = QtWidgets.QPushButton("Сохранить")
+        ok_button.clicked.connect(save)
+        ok_button.setDefault(True)
+        cancel_button = QtWidgets.QPushButton("Отменить")
+        cancel_button.clicked.connect(window.close)
+        buttons = [cancel_button, ok_button]
+        buttons_layout = QtWidgets.QHBoxLayout()
+        for b in buttons:
+            buttons_layout.addWidget(b)
+        window.layout().addLayout(buttons_layout)
+
+        window.exec_()
