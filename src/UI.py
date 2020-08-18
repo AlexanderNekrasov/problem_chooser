@@ -201,18 +201,14 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
             print("Already reloading")
             return
 
-        def show_time_count():
+        def show_statusbar_reloading():
             nonlocal timer_count
-            t = self.statusbarLabel.text().rstrip('1234567890c')
-            t += str(timer_count) + 'с'
-            self.statusbarLabel.setText(t)
+            self.statusbarLabel.setText(f" Обновление... {timer_count}с ")
             timer_count += 1
 
-        reconnect(self.statusbarTimer.timeout, show_time_count)
+        reconnect(self.statusbarTimer.timeout, show_statusbar_reloading)
         timer_count = 0
-
-        self.statusbarLabel.setText(" Обновление... ")
-        show_time_count()
+        show_statusbar_reloading()
         self.statusbarTimer.start(1000)
 
         if initialize:
