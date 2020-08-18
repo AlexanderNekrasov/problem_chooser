@@ -5,7 +5,7 @@ import cfg
 from src.MainPageParser import MainPageParser
 from src.RowSpanTableWidget import RowSpanTableWidget
 from src.TableParser import TableParser
-from src.Worker import Worker, reconnect
+from src.Worker import Worker, reconnect, disconnect_all
 from src.Config import config, save_config, reset_config
 
 
@@ -83,7 +83,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
 
         self.tableReloadSubmenu = QtWidgets.QAction("Обновить (~5 сек)")
         self.tableReloadSubmenu.setShortcut("Ctrl+R")
-        self.tableReloadSubmenu.triggered.connect(self.reload_table)
+        self.tableReloadSubmenu.triggered.connect(self.reload_call)
 
         self.tableAutoreloadSubmenu = QtWidgets.QAction(
             "Автообновление таблицы")
@@ -118,7 +118,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
 
         self.autoreloadTimer = QtCore.QTimer()
         self.autoreloadTimer.timeout.connect(
-            lambda: self.reload_table(is_autoreload=True))
+            lambda: self.reload_call(is_autoreload=True))
         self.autoreload_waiting = False
 
         self.statusbar = QtWidgets.QStatusBar(self)
@@ -223,6 +223,15 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
     def is_reloading(self):
         return self.tableParser.isReloading() or \
                self.mainPageParser.isReloading()
+
+    def reload_call(self, is_autoreload=False):
+        if is_autoreload:
+            disconnect_all(self.reloadButton.clicked)
+            self.reloadButton.animateClick()
+            self.reloadButton.clicked.connect(self.reload_table)
+            self.reload_table(is_autoreload=True)
+        else:
+            self.reloadButton.animateClick()
 
     def reload_table(self, initialize=False, is_autoreload=False):
         already_run = not initialize and \
@@ -444,7 +453,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         if config["is_autoreload"]:
             self.autoreloadTimer.start(config["autoreload_timeout"] * 1000)
 
-    def save_autorelaod(self, spinBox, checkBox):
+    def save_autoreload(self, spinBox, checkBox):
         config["is_autoreload"] = checkBox.isChecked()
         config["autoreload_timeout"] = spinBox.value()
         save_config()
@@ -488,7 +497,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         window.layout().addLayout(sec_layout)
 
         def save():
-            self.save_autorelaod(spinBox, checkBox)
+            self.save_autoreload(spinBox, checkBox)
             window.close()
 
         ok_button = QtWidgets.QPushButton("Сохранить")
