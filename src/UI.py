@@ -9,17 +9,29 @@ from src.Worker import Worker, reconnect
 from src.Config import config, save_config, reset_config
 
 
+initializing_parsers_number = 0
+
+
 def initParser(parserClass):
+    global initializing_parsers_number
+    initializing_parsers_number += 1
+
     name = parserClass.__name__
+    parser = None
+
     # parserClass.delete_cache()
     if parserClass.cache_exists():
         try:
             print(f"Loading {name} from cache...")
-            return parserClass.from_cache()
+            parser = parserClass.from_cache()
         except Exception as ex:
             print(ex)
-    print(f"Loading {name} from server...")
-    return parserClass.from_server()
+    if parser is None:
+        print(f"Loading {name} from server...")
+        parser = parserClass.from_server()
+
+    initializing_parsers_number -= 1
+    return parser
 
 
 class Ui_MainWindow(QtWidgets.QMainWindow):
@@ -213,10 +225,13 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
                self.mainPageParser.isReloading()
 
     def reload_table(self, initialize=False, is_autoreload=False):
-        already_run = not initialize and self.is_reloading()
+        already_run = not initialize and \
+                      (initializing_parsers_number > 0 or self.is_reloading())
         if is_autoreload:
             self.autoreload_waiting = already_run
             print('Autoreload waiting:', already_run)
+            if already_run:
+                self.autoreloadTimer.stop()
         if already_run:
             print("Already reloading")
             return
