@@ -362,6 +362,9 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         def checkbox_clicked(state):
             line.setDisabled(state == QtCore.Qt.Checked)
 
+        line = QtWidgets.QLineEdit(config["autoinput_text"])
+        line.setPlaceholderText("Имя по умолчанию")
+
         checkBox = QtWidgets.QCheckBox()
         checkBox.stateChanged.connect(checkbox_clicked)
         checkBox_size = int(font_size * 1.25)
@@ -375,9 +378,6 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         input_last.addStretch(1)
         input_last.addSpacing(font_size * 5)
         input_last.addWidget(checkBox)
-
-        line = QtWidgets.QLineEdit(config["autoinput_text"])
-        line.setPlaceholderText("Имя по умолчанию")
 
         window.layout().addLayout(input_last)
         window.layout().addWidget(line)
