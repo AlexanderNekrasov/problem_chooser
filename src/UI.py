@@ -46,7 +46,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.headerLabel = QtWidgets.QLabel(self.centralwidget)
         self.headerLabel.setText("Найдите самые простые задачи для себя")
 
-        self.reloadButton = QtWidgets.QPushButton("Обновить")
+        self.reloadButton = QtWidgets.QPushButton(" Обновить ")
         self.reloadButton.clicked.connect(self.reload_table)
 
         self.header = QtWidgets.QHBoxLayout()
@@ -308,13 +308,13 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         window.setWindowTitle("Настройки шрифта")
         window.setLayout(QtWidgets.QVBoxLayout())
 
-        lay, get_main_font_size = font_config_item("main_font_size",
-                                                   "Основной шрифт:")
-        lay, get_title_font_size = font_config_item("title_font_size",
-                                                    "Шрифт заголовков:")
+        lay_main, get_main_font_size = font_config_item("main_font_size",
+                                                        "Основной шрифт:")
+        lay_title, get_title_font_size = font_config_item("title_font_size",
+                                                          "Шрифт заголовков:")
         window.layout().addWidget(QtWidgets.QLabel("Выберите размеры шрифтов"))
-        window.layout().addLayout(lay)
-        window.layout().addLayout(lay)
+        window.layout().addLayout(lay_main)
+        window.layout().addLayout(lay_title)
 
         def save():
             self.save_font_size(get_main_font_size(), get_title_font_size())
