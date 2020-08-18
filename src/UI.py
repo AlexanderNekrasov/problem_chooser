@@ -105,7 +105,9 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.helpMenu.addAction(self.helpSubmenu)
 
         self.autoreloadTimer = QtCore.QTimer()
-        self.autoreloadTimer.timeout.connect(self.reload_table)
+        self.autoreloadTimer.timeout.connect(
+            lambda: self.reload_table(is_autoreload=True))
+        self.autoreload_waiting = False
 
         self.statusbar = QtWidgets.QStatusBar(self)
         self.statusbarLabel = QtWidgets.QLabel()
@@ -201,13 +203,21 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.statusbarLabel.setText(self.get_last_reload_time())
         self.set_last_reload_time()
         self.update_table()
+        if self.autoreload_waiting:
+            self.autoreload_waiting = False
+            self.reload_table(is_autoreload=True)
+            self.update_autoreload()
 
     def is_reloading(self):
         return self.tableParser.isReloading() or \
                self.mainPageParser.isReloading()
 
-    def reload_table(self, initialize=False):
-        if not initialize and self.is_reloading():
+    def reload_table(self, initialize=False, is_autoreload=False):
+        already_run = not initialize and self.is_reloading()
+        if is_autoreload:
+            self.autoreload_waiting = already_run
+            print('Autoreload waiting:', already_run)
+        if already_run:
             print("Already reloading")
             return
 
@@ -414,6 +424,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
     # # # # # # # # # # # # # #  AUTO RELOAD TABLE  # # # # # # # # # # # # # #
 
     def update_autoreload(self):
+        self.autoreload_waiting = False
         self.autoreloadTimer.stop()
         if config["is_autoreload"]:
             self.autoreloadTimer.start(config["autoreload_timeout"] * 1000)
