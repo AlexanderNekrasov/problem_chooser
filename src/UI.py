@@ -104,6 +104,9 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.helpMenu = self.menubar.addMenu("&Помощь")
         self.helpMenu.addAction(self.helpSubmenu)
 
+        self.autoreloadTimer = QtCore.QTimer()
+        self.autoreloadTimer.timeout.connect(self.reload_table)
+
         self.statusbar = QtWidgets.QStatusBar(self)
         self.statusbarLabel = QtWidgets.QLabel()
         self.statusbarTimer = QtCore.QTimer()
@@ -114,6 +117,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.update_table()
         self.reload_table(initialize=True)
         self.load_autoinput()
+        self.update_autoreload()
 
     def reset_config(self):
         config.clear()
@@ -409,10 +413,16 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # # # # # # # # # # # # # #  AUTO RELOAD TABLE  # # # # # # # # # # # # # #
 
+    def update_autoreload(self):
+        self.autoreloadTimer.stop()
+        if config["is_autoreload"]:
+            self.autoreloadTimer.start(config["autoreload_timeout"] * 1000)
+
     def save_autorelaod(self, spinBox, checkBox):
         config["is_autoreload"] = checkBox.isChecked()
         config["autoreload_timeout"] = spinBox.value()
         save_config()
+        self.update_autoreload()
 
     def open_autoreload_table(self):
         font_size = config["main_font_size"]
