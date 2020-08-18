@@ -5,7 +5,7 @@ import cfg
 from src.MainPageParser import MainPageParser
 from src.RowSpanTableWidget import RowSpanTableWidget
 from src.TableParser import TableParser
-from src.Worker import Worker
+from src.Worker import Worker, reconnect
 from src.Config import config, save_config, reset_config
 
 
@@ -100,6 +100,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
 
         self.statusbar = QtWidgets.QStatusBar(self)
         self.statusbarLabel = QtWidgets.QLabel()
+        self.statusbarTimer = QtCore.QTimer()
         self.statusbar.addWidget(self.statusbarLabel)
         self.setStatusBar(self.statusbar)
         self.set_last_reload_time()
@@ -186,16 +187,30 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
             print('Still reloading...')
             return
         print('Reload finished')
+        self.statusbarTimer.stop()
         self.statusbarLabel.setText(self.get_last_reload_time())
         self.set_last_reload_time()
         self.update_table()
 
+    def is_reloading(self):
+        return self.tableParser.isReloading() or \
+               self.mainPageParser.isReloading()
+
     def reload_table(self, initialize=False):
-        if not initialize and (self.tableParser.isReloading() or
-                               self.mainPageParser.isReloading()):
+        if not initialize and self.is_reloading():
             print("Already reloading")
             return
-        self.statusbarLabel.setText(" Обновление... ")
+
+        def show_statusbar_reloading():
+            nonlocal timer_count
+            self.statusbarLabel.setText(f" Обновление... {timer_count}с ")
+            timer_count += 1
+
+        reconnect(self.statusbarTimer.timeout, show_statusbar_reloading)
+        timer_count = 0
+        show_statusbar_reloading()
+        self.statusbarTimer.start(1000)
+
         if initialize:
             print('Initializing parsers...')
             self.worker = Worker()
