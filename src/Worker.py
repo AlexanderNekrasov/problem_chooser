@@ -6,26 +6,21 @@ def EMPTY_FUNCTION(*args, **kwargs):
     pass
 
 
-class ModifiedSignal(QtCore.QObject):
-    signal = QtCore.pyqtSignal()
+def disconnect_all(obj):
+    try:
+        while True:
+            obj.disconnect()
+    except TypeError:
+        pass
 
-    def disconnect_all(self):
-        try:
-            while True:
-                self.disconnect()
-        except TypeError:
-            pass
 
-    def reconnect(self, handler):
-        self.disconnect_all()
-        self.connect(handler)
-
-    def __getattr__(self, item):
-        return self.signal.__getattribute__(item)
+def reconnect(obj, handler):
+    disconnect_all(obj)
+    obj.connect(handler)
 
 
 class WorkerSignals(QtCore.QObject):
-    finished = ModifiedSignal()
+    finished = QtCore.pyqtSignal()
 
 
 class Worker(QtCore.QThread):
@@ -49,7 +44,7 @@ class Worker(QtCore.QThread):
 
     def __call__(self, _worker_function, _worker_finished, *args, **kwargs):
         self.function = _worker_function
-        self.signals.finished.reconnect(_worker_finished)
+        reconnect(self.signals.finished, _worker_finished)
         self.args = args
         self.kwargs = kwargs
         self.start()
