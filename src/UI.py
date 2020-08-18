@@ -105,11 +105,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.set_last_reload_time()
 
         self.update_table()
-
-        self.statusbarLabel.setText(" Обновление... ")
-        self.worker = Worker()
-        self.worker(self.initParsers, self.on_reload_finished)
-
+        self.reload_table(initialize=True)
         self.load_autoinput()
 
     def reset_config(self):
@@ -186,17 +182,27 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         return " Последнее обновление: " + strtime + " "
 
     def on_reload_finished(self):
+        if self.tableParser.isReloading() or self.mainPageParser.isReloading():
+            print('Still reloading...')
+            return
+        print('Reload finished')
         self.statusbarLabel.setText(self.get_last_reload_time())
         self.set_last_reload_time()
         self.update_table()
 
-    def reload_table(self):
-        if self.tableParser.isReloading():
+    def reload_table(self, initialize=False):
+        if not initialize and (self.tableParser.isReloading() or
+                               self.mainPageParser.isReloading()):
             print("Already reloading")
             return
         self.statusbarLabel.setText(" Обновление... ")
-        self.tableParser.reload(self.on_reload_finished)
-        self.mainPageParser.reload()
+        if initialize:
+            print('Initializing parsers...')
+            self.worker = Worker()
+            self.worker(self.initParsers, self.on_reload_finished)
+        else:
+            self.tableParser.reload(self.on_reload_finished)
+            self.mainPageParser.reload(self.on_reload_finished)
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # # # # # # # # # # # # # # # # #  HELP   # # # # # # # # # # # # # # # # #
