@@ -69,12 +69,18 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.menubar = QtWidgets.QMenuBar(self)
         self.setMenuBar(self.menubar)
 
-        self.reloadSubmenu = QtWidgets.QAction("Обновить (~5 сек)")
-        self.reloadSubmenu.setShortcut("Ctrl+R")
-        self.reloadSubmenu.triggered.connect(self.reload_table)
+        self.tableReloadSubmenu = QtWidgets.QAction("Обновить (~5 сек)")
+        self.tableReloadSubmenu.setShortcut("Ctrl+R")
+        self.tableReloadSubmenu.triggered.connect(self.reload_table)
+
+        self.tableAutoreloadSubmenu = QtWidgets.QAction(
+            "Автообновление таблицы")
+        self.tableAutoreloadSubmenu.triggered.connect(
+            self.open_autoreload_table)
 
         self.tableMenu = self.menubar.addMenu("&Таблица")
-        self.tableMenu.addAction(self.reloadSubmenu)
+        self.tableMenu.addAction(self.tableReloadSubmenu)
+        self.tableMenu.addAction(self.tableAutoreloadSubmenu)
 
         self.configFontSubmenu = QtWidgets.QAction("Шрифт")
         self.configFontSubmenu.triggered.connect(self.open_font_config)
@@ -369,6 +375,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
             f'QCheckBox::indicator {{ width: {checkBox_size}px; \
                                       height: {checkBox_size}px; }}')
         checkBox.setChecked(config["is_autoinput_last"])
+        checkbox_clicked(checkBox.isChecked())
 
         input_last = QtWidgets.QHBoxLayout()
         input_last.addWidget(QtWidgets.QLabel("Запоминать последнее имя?"))
@@ -384,6 +391,68 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
 
         def save():
             self.save_autoinput(line, checkBox)
+            window.close()
+
+        ok_button = QtWidgets.QPushButton("Сохранить")
+        ok_button.clicked.connect(save)
+        ok_button.setDefault(True)
+        cancel_button = QtWidgets.QPushButton("Отменить")
+        cancel_button.clicked.connect(window.close)
+        buttons = [cancel_button, ok_button]
+        buttons_layout = QtWidgets.QHBoxLayout()
+        for b in buttons:
+            buttons_layout.addWidget(b)
+        window.layout().addLayout(buttons_layout)
+
+        window.exec_()
+
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+    # # # # # # # # # # # # # #  AUTO RELOAD TABLE  # # # # # # # # # # # # # #
+
+    def save_autorelaod(self, spinBox, checkBox):
+        config["is_autoreload"] = checkBox.isChecked()
+        config["autoreload_timeout"] = spinBox.value()
+        save_config()
+
+    def open_autoreload_table(self):
+        font_size = config["main_font_size"]
+        window = QtWidgets.QDialog(self)
+        window.setWindowTitle("Автообновление таблицы")
+        window.setLayout(QtWidgets.QVBoxLayout())
+
+        def checkbox_clicked(state):
+            spinBox.setEnabled(state)
+
+        spinBox = QtWidgets.QSpinBox()
+        spinBox.setRange(0, 9999999)
+        spinBox.setValue(config["autoreload_timeout"])
+        sec_layout = QtWidgets.QHBoxLayout()
+        sec_layout.addWidget(QtWidgets.QLabel("Секунд между обновлениями:"))
+        sec_layout.addStretch(1)
+        sec_layout.addWidget(spinBox)
+
+        checkBox = QtWidgets.QCheckBox()
+        checkBox.stateChanged.connect(checkbox_clicked)
+        checkBox_size = int(font_size * 1.25)
+        checkBox.setStyleSheet(  # set size
+            f'QCheckBox::indicator {{ width: {checkBox_size}px; \
+                                      height: {checkBox_size}px; }}')
+
+        checkBox.setChecked(config["is_autoreload"])
+        checkbox_clicked(checkBox.isChecked())
+
+        is_autoreload = QtWidgets.QHBoxLayout()
+        is_autoreload.addWidget(
+            QtWidgets.QLabel("Использовать автообновление таблицы?"))
+        is_autoreload.addStretch(1)
+        is_autoreload.addSpacing(font_size)
+        is_autoreload.addWidget(checkBox)
+
+        window.layout().addLayout(is_autoreload)
+        window.layout().addLayout(sec_layout)
+
+        def save():
+            self.save_autorelaod(spinBox, checkBox)
             window.close()
 
         ok_button = QtWidgets.QPushButton("Сохранить")
