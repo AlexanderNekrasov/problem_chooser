@@ -211,9 +211,17 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
             strtime = self.tableParser.last_reload_time.strftime("%x %X")
         return " Последнее обновление: " + strtime + " "
 
+    @staticmethod
+    def format_time(secs):
+        s = secs % 60
+        m = secs // 60 % 60
+        h = secs // 60 // 60
+        nums = ('{:0>2}'.format(el) for el in (h, m, s))
+        return ':'.join(nums)
+
     def process_autoreload_time(self):
         self.autoreloadTimerLabel.setText(
-            str(self.autoreload_remaining) + 'с')
+            self.format_time(self.autoreload_remaining))
         if self.autoreload_remaining == 0:
             self.reload_table(is_autoreload=True)
         else:
@@ -242,6 +250,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
             self.reloadButton.setDown(True)
             self.worker.msleep(200)
             self.reloadButton.setDown(False)
+
         self.worker(animate, EMPTY_FUNCTION)
 
     def reload_table(self, initialize=False, is_autoreload=False):
@@ -286,12 +295,12 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
             suggest_link = f.read().strip()
         # init window
         help_window = QtWidgets.QDialog(self)
-        help_window.setWindowTitle('О программе')
+        help_window.setWindowTitle("О программе")
         help_window.resize(self.width() + 50, 600)
         help_window.setLayout(QtWidgets.QVBoxLayout())
 
         # title
-        img = QtGui.QPixmap(cfg.resource('icon.ico'))
+        img = QtGui.QPixmap(cfg.resource("icon.ico"))
         title_layout = QtWidgets.QHBoxLayout()
         img_label = QtWidgets.QLabel()
         img_label.setPixmap(img)
@@ -420,8 +429,8 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         checkBox.stateChanged.connect(checkbox_clicked)
         checkBox_size = int(font_size * 1.25)
         checkBox.setStyleSheet(  # set size
-            f'QCheckBox::indicator {{ width: {checkBox_size}px; \
-                                      height: {checkBox_size}px; }}')
+            f"QCheckBox::indicator {{ width: {checkBox_size}px; \
+                                      height: {checkBox_size}px; }}")
         checkBox.setChecked(config["is_autoinput_last"])
         checkbox_clicked(checkBox.isChecked())
 
@@ -493,8 +502,8 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         checkBox.stateChanged.connect(checkbox_clicked)
         checkBox_size = int(font_size * 1.25)
         checkBox.setStyleSheet(  # set size
-            f'QCheckBox::indicator {{ width: {checkBox_size}px; \
-                                      height: {checkBox_size}px; }}')
+            f"QCheckBox::indicator {{ width: {checkBox_size}px; \
+                                      height: {checkBox_size}px; }}")
 
         checkBox.setChecked(config["is_autoreload"])
         checkbox_clicked(checkBox.isChecked())
