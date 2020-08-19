@@ -5,7 +5,7 @@ import cfg
 from src.MainPageParser import MainPageParser
 from src.RowSpanTableWidget import RowSpanTableWidget
 from src.TableParser import TableParser
-from src.Worker import Worker, reconnect, disconnect_all
+from src.Worker import Worker, reconnect, EMPTY_FUNCTION
 from src.Config import config, save_config, reset_config
 
 
@@ -58,11 +58,17 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.headerLabel = QtWidgets.QLabel(self.centralwidget)
         self.headerLabel.setText("Найдите самые простые задачи для себя")
 
+        self.autoreloadTimer = QtCore.QTimer()
+        self.autoreloadTimer.timeout.connect(self.process_autoreload_time)
+        self.autoreload_remaining = None
+        self.autoreloadTimerLabel = QtWidgets.QLabel()
+
         self.reloadButton = QtWidgets.QPushButton(" Обновить ")
         self.reloadButton.clicked.connect(self.reload_table)
 
         self.header = QtWidgets.QHBoxLayout()
         self.header.addWidget(self.headerLabel, stretch=5)
+        self.header.addWidget(self.autoreloadTimerLabel)
         self.header.addWidget(self.reloadButton, stretch=1)
 
         self.lineEdit = QtWidgets.QLineEdit()
@@ -83,7 +89,8 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
 
         self.tableReloadSubmenu = QtWidgets.QAction("Обновить (~5 сек)")
         self.tableReloadSubmenu.setShortcut("Ctrl+R")
-        self.tableReloadSubmenu.triggered.connect(self.reload_call)
+        self.tableReloadSubmenu.triggered.connect(
+            self.reloadButton.animateClick)
 
         self.tableAutoreloadSubmenu = QtWidgets.QAction(
             "Автообновление таблицы")
@@ -115,11 +122,6 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
 
         self.helpMenu = self.menubar.addMenu("&Помощь")
         self.helpMenu.addAction(self.helpSubmenu)
-
-        self.autoreloadTimer = QtCore.QTimer()
-        self.autoreloadTimer.timeout.connect(
-            lambda: self.reload_call(is_autoreload=True))
-        self.autoreload_waiting = False
 
         self.statusbar = QtWidgets.QStatusBar(self)
         self.statusbarLabel = QtWidgets.QLabel()
@@ -196,6 +198,9 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
             self.table.appendRow([3], ["Не найдено"])
             self.table.item(0, 0).setTextAlignment(QtCore.Qt.AlignHCenter)
 
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+    # # # # # # # # # # # # # # #  TABLE RELOAD   # # # # # # # # # # # # # # #
+
     def set_last_reload_time(self):
         self.statusbarLabel.setText(self.get_last_reload_time())
 
@@ -206,6 +211,14 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
             strtime = self.tableParser.last_reload_time.strftime("%x %X")
         return " Последнее обновление: " + strtime + " "
 
+    def process_autoreload_time(self):
+        self.autoreloadTimerLabel.setText(
+            str(self.autoreload_remaining) + 'с')
+        if self.autoreload_remaining == 0:
+            self.reload_table(is_autoreload=True)
+        else:
+            self.autoreload_remaining -= 1
+
     def on_reload_finished(self):
         if self.tableParser.isReloading() or self.mainPageParser.isReloading():
             print('Still reloading...')
@@ -215,35 +228,33 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.statusbarLabel.setText(self.get_last_reload_time())
         self.set_last_reload_time()
         self.update_table()
-        if self.autoreload_waiting:
-            self.autoreload_waiting = False
+        if self.autoreload_remaining == 0:
             self.reload_table(is_autoreload=True)
             self.update_autoreload()
 
     def is_reloading(self):
-        return self.tableParser.isReloading() or \
+        return initializing_parsers_number > 0 or \
+               self.tableParser.isReloading() or \
                self.mainPageParser.isReloading()
 
-    def reload_call(self, is_autoreload=False):
-        if is_autoreload:
-            disconnect_all(self.reloadButton.clicked)
-            self.reloadButton.animateClick()
-            self.reloadButton.clicked.connect(self.reload_table)
-            self.reload_table(is_autoreload=True)
-        else:
-            self.reloadButton.animateClick()
+    def reload_button_animate(self):
+        def animate():
+            from time import sleep
+            self.reloadButton.setDown(True)
+            sleep(0.2)
+            self.reloadButton.setDown(False)
+        self.worker(animate, EMPTY_FUNCTION)
 
     def reload_table(self, initialize=False, is_autoreload=False):
-        already_run = not initialize and \
-                      (initializing_parsers_number > 0 or self.is_reloading())
-        if is_autoreload:
-            self.autoreload_waiting = already_run
-            print('Autoreload waiting:', already_run)
-            if already_run:
-                self.autoreloadTimer.stop()
+        already_run = not initialize and self.is_reloading()
         if already_run:
             print("Already reloading")
+            if is_autoreload:
+                self.autoreloadTimer.stop()
             return
+        elif is_autoreload:
+            self.reload_button_animate()
+            self.autoreload_remaining = config["autoreload_timeout"]
 
         def show_statusbar_reloading():
             nonlocal timer_count
@@ -448,10 +459,13 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
     # # # # # # # # # # # # # #  AUTO RELOAD TABLE  # # # # # # # # # # # # # #
 
     def update_autoreload(self):
-        self.autoreload_waiting = False
         self.autoreloadTimer.stop()
         if config["is_autoreload"]:
-            self.autoreloadTimer.start(config["autoreload_timeout"] * 1000)
+            self.autoreload_remaining = config["autoreload_timeout"]
+            self.autoreloadTimer.start(1000)
+        else:
+            self.autoreloadTimerLabel.setText("")
+            self.autoreload_remaining = None
 
     def save_autoreload(self, spinBox, checkBox):
         config["is_autoreload"] = checkBox.isChecked()
@@ -469,7 +483,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
             spinBox.setEnabled(state)
 
         spinBox = QtWidgets.QSpinBox()
-        spinBox.setRange(0, 9999999)
+        spinBox.setRange(0, 359999)
         spinBox.setValue(config["autoreload_timeout"])
         sec_layout = QtWidgets.QHBoxLayout()
         sec_layout.addWidget(QtWidgets.QLabel("Секунд между обновлениями:"))
