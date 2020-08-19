@@ -9,7 +9,7 @@ default_config = {"main_font_size": 11,
                   "autoinput_text": "",
                   "autoinput_last": "",
                   "is_autoreload": False,
-                  "autoreload_timeout": 300}
+                  "autoreload_timeout": 600}
 
 config = None
 
