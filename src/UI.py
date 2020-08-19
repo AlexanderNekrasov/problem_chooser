@@ -239,9 +239,8 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
 
     def reload_button_animate(self):
         def animate():
-            from time import sleep
             self.reloadButton.setDown(True)
-            sleep(0.2)
+            self.worker.msleep(200)
             self.reloadButton.setDown(False)
         self.worker(animate, EMPTY_FUNCTION)
 
