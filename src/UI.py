@@ -135,15 +135,31 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.load_autoinput()
         self.update_autoreload()
 
+    def closeEvent(self, event):
+        self.save_autoinput_last()
+        event.accept()
+
     def reset_config(self):
         config.clear()
         config.update(reset_config())
         save_config()
         self.update_font()
 
-    def closeEvent(self, event):
-        self.save_autoinput_last()
-        event.accept()
+    def reload_button_animate(self):
+        def animate():
+            self.reloadButton.setDown(True)
+            self.worker.msleep(200)
+            self.reloadButton.setDown(False)
+
+        self.worker(animate, EMPTY_FUNCTION)
+
+    @staticmethod
+    def format_time(secs):
+        s = secs % 60
+        m = secs // 60 % 60
+        h = secs // 60 // 60
+        nums = ('{:0>2}'.format(el) for el in (h, m, s))
+        return ':'.join(nums)
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # # # # # # # # # # # # # # # # #  TABLE  # # # # # # # # # # # # # # # # #
@@ -211,22 +227,6 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
             strtime = self.tableParser.last_reload_time.strftime("%x %X")
         return " Последнее обновление: " + strtime + " "
 
-    @staticmethod
-    def format_time(secs):
-        s = secs % 60
-        m = secs // 60 % 60
-        h = secs // 60 // 60
-        nums = ('{:0>2}'.format(el) for el in (h, m, s))
-        return ':'.join(nums)
-
-    def process_autoreload_time(self):
-        self.autoreloadTimerLabel.setText(
-            self.format_time(self.autoreload_remaining))
-        if self.autoreload_remaining == 0:
-            self.reload_table(is_autoreload=True)
-        else:
-            self.autoreload_remaining -= 1
-
     def on_reload_finished(self):
         if self.tableParser.isReloading() or self.mainPageParser.isReloading():
             print('Still reloading...')
@@ -244,14 +244,6 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         return initializing_parsers_number > 0 or \
                self.tableParser.isReloading() or \
                self.mainPageParser.isReloading()
-
-    def reload_button_animate(self):
-        def animate():
-            self.reloadButton.setDown(True)
-            self.worker.msleep(200)
-            self.reloadButton.setDown(False)
-
-        self.worker(animate, EMPTY_FUNCTION)
 
     def reload_table(self, initialize=False, is_autoreload=False):
         already_run = not initialize and self.is_reloading()
@@ -283,7 +275,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
             self.mainPageParser.reload(self.on_reload_finished)
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-    # # # # # # # # # # # # # # # # #  HELP   # # # # # # # # # # # # # # # # #
+    # # # # # # # # # # # # # # # #  HELP MENU  # # # # # # # # # # # # # # # #
 
     def open_help(self):
         with open(cfg.resource("help"), "r", encoding="utf-8") as f:
@@ -465,6 +457,14 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # # # # # # # # # # # # # #  AUTO RELOAD TABLE  # # # # # # # # # # # # # #
+
+    def process_autoreload_time(self):
+        self.autoreloadTimerLabel.setText(
+            self.format_time(self.autoreload_remaining))
+        if self.autoreload_remaining == 0:
+            self.reload_table(is_autoreload=True)
+        else:
+            self.autoreload_remaining -= 1
 
     def update_autoreload(self):
         self.autoreloadTimer.stop()
