@@ -109,7 +109,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
             self.open_autoinput_config)
 
         self.configResetSubmenu = QtWidgets.QAction("Сбросить")
-        self.configResetSubmenu.triggered.connect(self.reset_config)
+        self.configResetSubmenu.triggered.connect(self.reset_config_confirm)
 
         self.configMenu = self.menubar.addMenu("&Настройки")
         self.configMenu.addAction(self.configFontSubmenu)
@@ -138,12 +138,6 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
     def closeEvent(self, event):
         self.save_autoinput_last()
         event.accept()
-
-    def reset_config(self):
-        config.clear()
-        config.update(reset_config())
-        save_config()
-        self.update_font()
 
     def reload_button_animate(self):
         def animate():
@@ -332,6 +326,42 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
 
         # show window
         help_window.exec_()
+
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+    # # # # # # # # # # # # # # # # # RESET CONFIG  # # # # # # # # # # # # # #
+
+    def reset_config_confirm(self):
+        window = QtWidgets.QDialog(self)
+        window.setWindowTitle("Сброс настроек")
+        window.setLayout(QtWidgets.QVBoxLayout())
+
+        text = QtWidgets.QLabel("""Уверены, что хотите сбросить настройки?
+Вы сбросите:
+- Шрифт
+- Автоввод
+- Автообновление""")
+
+        window.layout().addWidget(text)
+
+        ok_button = QtWidgets.QPushButton("Сбросить")
+        ok_button.clicked.connect(lambda:
+                                  (self.reset_config(), window.close()))
+        cancel_button = QtWidgets.QPushButton("Отменить")
+        cancel_button.clicked.connect(window.close)
+        cancel_button.setDefault(True)
+        buttons = [cancel_button, ok_button]
+        buttons_layout = QtWidgets.QHBoxLayout()
+        for b in buttons:
+            buttons_layout.addWidget(b)
+        window.layout().addLayout(buttons_layout)
+
+        window.exec_()
+
+    def reset_config(self):
+        config.clear()
+        config.update(reset_config())
+        save_config()
+        self.update_font()
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # # # # # # # # # # # # # # #  FONT SETTINGS  # # # # # # # # # # # # # # #
