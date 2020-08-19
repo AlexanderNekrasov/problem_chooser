@@ -56,12 +56,12 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.setCentralWidget(self.centralwidget)
 
         self.headerLabel = QtWidgets.QLabel(self.centralwidget)
-        self.headerLabel.setText("Найдите самые простые задачи для себя")
+        self.headerLabel.setText("Найдите самые простые задачи для себя  ")
 
         self.autoreloadTimer = QtCore.QTimer()
         self.autoreloadTimer.timeout.connect(self.process_autoreload_time)
+        self.autoreloadTimerLabel = QtWidgets.QLabel(" " * 16)  # font const
         self.autoreload_remaining = None
-        self.autoreloadTimerLabel = QtWidgets.QLabel()
 
         self.reloadButton = QtWidgets.QPushButton(" Обновить ")
         self.reloadButton.clicked.connect(self.reload_table)
@@ -472,7 +472,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
             self.autoreload_remaining = config["autoreload_timeout"]
             self.autoreloadTimer.start(1000)
         else:
-            self.autoreloadTimerLabel.setText("")
+            self.autoreloadTimerLabel.setText(" " * 16)
             self.autoreload_remaining = None
 
     def save_autoreload(self, spinBox, checkBox):
