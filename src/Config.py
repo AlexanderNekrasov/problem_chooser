@@ -7,7 +7,9 @@ default_config = {"main_font_size": 11,
                   "title_font_size": 20,
                   "is_autoinput_last": False,
                   "autoinput_text": "",
-                  "autoinput_last": ""}
+                  "autoinput_last": "",
+                  "is_autoreload": False,
+                  "autoreload_timeout": 600}
 
 config = None
 
