@@ -65,6 +65,8 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
 
         self.reloadButton = QtWidgets.QPushButton(" Обновить ")
         self.reloadButton.clicked.connect(self.reload_table)
+        self.reloadButton.resizeEvent = lambda *args: \
+            self.lineClear.setFixedSize(self.reloadButton.size())
 
         self.header = QtWidgets.QHBoxLayout()
         self.header.addWidget(self.headerLabel, stretch=5)
@@ -75,13 +77,21 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.lineEdit.textChanged.connect(self.update_table)
         self.lineEdit.setPlaceholderText("Введите ваше имя")
 
+        self.lineClear = QtWidgets.QPushButton(" Очистить ")
+        self.lineClear.clicked.connect(self.lineEdit.clear)
+        self.lineClear.setFixedSize(self.reloadButton.size())
+
+        self.lineLayout = QtWidgets.QHBoxLayout()
+        self.lineLayout.addWidget(self.lineEdit)
+        self.lineLayout.addWidget(self.lineClear)
+
         self.table = RowSpanTableWidget(3, self)
         self.table.doubleClicked.connect(self.double_clicked)
 
         self.main_layout = QtWidgets.QVBoxLayout(self.centralwidget)
         self.main_layout.addLayout(self.header)
         self.main_layout.addSpacing(10)
-        self.main_layout.addWidget(self.lineEdit)
+        self.main_layout.addLayout(self.lineLayout)
         self.main_layout.addWidget(self.table)
 
         self.menubar = QtWidgets.QMenuBar(self)
@@ -327,8 +337,8 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         help_window.layout().addLayout(title_layout)
         help_window.layout().addWidget(scroll_help)
         help_window.layout().addLayout(buttons_layout)
-        help_window.resizeEvent = lambda *args: help_label.setFixedWidth(
-            help_window.width() - 50)
+        help_window.resizeEvent = lambda *args: \
+            help_label.setFixedWidth(help_window.width() - 50)
 
         # show window
         help_window.exec_()
