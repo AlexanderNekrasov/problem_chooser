@@ -43,7 +43,7 @@ else:
     print('BUILD FINISHED')
 
 shutil.rmtree('build')
-dirname = os.listdir('dist')[0]
+dirname = "problem-chooser"  # dist/{dirname}
 shutil.move('dist', NAME)
 if os.path.exists(os.path.join(NAME, 'dist')):
     print('\nOOOPS!\nBug with "dist" instead of "problem-chooser"')
@@ -100,7 +100,7 @@ if ADD_ICON:
 
 if MAKE_ZIP:
     if cfg.platform == 'mac':
-        shutil.rmtree(os.path.join(NAME, dirname))
+        shutil.rmtree(os.path.join(NAME, dirname), ignore_errors=True)
     print("\nMaking zip")
     with zipfile.ZipFile(NAME + '.zip', 'w', zipfile.ZIP_DEFLATED) as z:
         for root, dirs, files in os.walk(NAME, followlinks=True):
