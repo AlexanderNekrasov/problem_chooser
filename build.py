@@ -42,8 +42,12 @@ except Exception as ex:
 else:
     print('BUILD FINISHED')
 
+dirname = "problem-chooser"
+if cfg.platform == 'mac':
+    shutil.rmtree(os.path.join(NAME, dirname), ignore_errors=True)
+    dirname = "problem-chooser.app"
+
 shutil.rmtree('build')
-dirname = "problem-chooser"  # dist/{dirname}
 shutil.move('dist', NAME)
 if os.path.exists(os.path.join(NAME, 'dist')):
     print('\nOOOPS!\nBug with "dist" instead of "problem-chooser"')
@@ -51,7 +55,7 @@ if os.path.exists(os.path.join(NAME, 'dist')):
 
 #                                                                             #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-#                             MOVING FILES TO LIB                             #
+#                                 FILE TRICKS                                 #
 
 if cfg.platform == 'win':
     exec_loc = os.path.join(NAME, dirname)
@@ -71,6 +75,9 @@ if cfg.platform == 'win':
             shutil.move(os.path.join(exec_loc, name), lib_path)
     shutil.move(os.path.join(exec_loc, 'PyQt5', 'Qt', 'plugins', 'platforms'),
                 os.path.join(exec_loc, 'platforms'))
+elif cfg.platform == 'mac':
+    pass
+
 
 #                                                                             #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -99,8 +106,6 @@ if ADD_ICON:
 #                                  MAKE ZIP                                   #
 
 if MAKE_ZIP:
-    if cfg.platform == 'mac':
-        shutil.rmtree(os.path.join(NAME, dirname), ignore_errors=True)
     print("\nMaking zip")
     with zipfile.ZipFile(NAME + '.zip', 'w', zipfile.ZIP_DEFLATED) as z:
         for root, dirs, files in os.walk(NAME, followlinks=True):
