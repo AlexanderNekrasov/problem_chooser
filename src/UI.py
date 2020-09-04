@@ -176,6 +176,9 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
     # # # # # # # # # # # # # # # # #  TABLE  # # # # # # # # # # # # # # # # #
 
     def double_clicked(self):
+        if initializing_parsers_number > 0:
+            print('Initialize is running. Ignoring double click.')
+            return
         item = self.table.currentItem()
         if item.text() in self.tableParser.get_names():
             self.lineEdit.setText(item.text())
