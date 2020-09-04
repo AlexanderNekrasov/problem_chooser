@@ -10,7 +10,6 @@ from site import getsitepackages
 
 
 def return_hook_backup():
-    global hook_modifying
     print("Returning hook backup back")
     try:
         os.replace(backup_path, hook_path)
@@ -19,7 +18,6 @@ def return_hook_backup():
         print(ex)
         return False
     else:
-        hook_modifying = False
         print("backup returned")
         return True
 
