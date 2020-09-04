@@ -17,13 +17,15 @@ def return_hook_backup():
     except Exception as ex:
         print("haha loh. error is happened.")
         print(ex)
+        return False
     else:
         hook_modifying = False
         print("backup returned")
+        return True
 
 
 def save_exit(code):
-    if hook_modifying:
+    if hook_modifying and not already_returned:
         return_hook_backup()
     sys.exit(code)
 
@@ -50,6 +52,7 @@ if cfg.platform == 'win':
 #                                BUILD PREPARE                                #
 
 hook_modifying = False
+already_returned = False
 hook_path = ""
 backup_path = ""
 
@@ -109,7 +112,7 @@ except Exception as ex:
     save_exit(1)
 else:
     print('BUILD FINISHED')
-    return_hook_backup()
+    already_returned = return_hook_backup()
 
 #                                                                             #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
