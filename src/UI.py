@@ -8,14 +8,14 @@ from src.TableParser import TableParser
 from src.Worker import Worker, reconnect, EMPTY_FUNCTION
 from src.Config import config, save_config, reset_config
 
-
 initializing_parsers_number = 0
 
 
 def initParser(parserClass):
-    global initializing_parsers_number
-    initializing_parsers_number += 1
+    def add(delta):
+        globals()['initializing_parsers_number'] += delta
 
+    add(1)
     name = parserClass.__name__
     parser = None
 
@@ -30,7 +30,7 @@ def initParser(parserClass):
         print(f"Loading {name} from server...")
         parser = parserClass.from_server()
 
-    initializing_parsers_number -= 1
+    add(-1)
     return parser
 
 
@@ -265,7 +265,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
             if is_autoreload:
                 self.autoreloadTimer.stop()
             return
-        elif is_autoreload:
+        if is_autoreload:
             self.reload_button_animate()
             self.autoreload_remaining = config["autoreload_timeout"]
 
