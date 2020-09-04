@@ -8,9 +8,9 @@
 
 Приложение доступно только для систем Windows, Linux и Mac OS.
 
-Скачайте [отсюда](https://github.com/AlexanderNekrasov/problem_chooser/releases/latest) архив `problem-chooser-vXX-OS.zip` для своей операционной системы. 
+Скачайте [отсюда](https://github.com/AlexanderNekrasov/problem_chooser/releases/latest) архив `problem-chooser-vXX-OS.zip` для своей операционной системы.
 
-После разархивации появится файл `problem-chooser` (с расширением для вашей операционной системы). 
+После разархивации появится файл `problem-chooser` (с расширением для вашей операционной системы).
 Запустите этот файл. Готово!
 
 ## Как пользоваться
@@ -24,8 +24,8 @@
 
 ## Как поддержать проект
 Если вы обнаружили неисправность или хотите новую функциональность, *обязательно* напишите разработчикам:
- * telegram: [@crazyilian](https://trussian.ru/crazyilian "Открыть чат @crazyilian")
- * telegram: [@AlexNekrasov01](https://trussian.ru/AlexNekrasov01 "Открыть чат @AlexNekrasov01")
+ * telegram: [@crazyilian](https://t.me/crazyilian "Открыть чат @crazyilian")
+ * telegram: [@AlexNekrasov01](https://t.me/AlexNekrasov01 "Открыть чат @AlexNekrasov01")
  * vk: [@crazyilian](https://vk.com/im?sel=240253698 "Открыть чат @crazyilian")
 
 Также поддержать проект вы можете отправив любую сумму:
