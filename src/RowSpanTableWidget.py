@@ -41,3 +41,6 @@ class RowSpanTableWidget(QtWidgets.QTableWidget):
 
     def clear(self):
         self.setRowCount(0)
+
+    def deselect_all(self):
+        self.setCurrentItem(QtWidgets.QTableWidgetItem())

@@ -80,7 +80,8 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.lineClear = QtWidgets.QPushButton(" Очистить ")
         self.lineClear.clicked.connect(lambda:
                                        (self.lineEdit.clear(),
-                                        self.lineEdit.setFocus()))
+                                        self.lineEdit.setFocus(),
+                                        self.table.deselect_all()))
         self.lineClear.setFixedSize(self.reloadButton.size())
 
         self.lineLayout = QtWidgets.QHBoxLayout()
