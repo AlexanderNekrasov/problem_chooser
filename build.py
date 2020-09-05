@@ -164,10 +164,10 @@ if ADD_ICON:
         from subprocess import call
 
         rh_args = ['ResourceHacker.exe',
-                   '-open', exec_path,
-                   '-save', exec_path,
+                   '-open', '"' + exec_path + '"',
+                   '-save', '"' + exec_path + '"',
                    '-action', 'addskip',
-                   '-res', cfg.resource('icon.ico'),
+                   '-res', '"' + cfg.resource('icon.ico') + '"',
                    '-mask', 'ICONGROUP,MAINICON']
         return_code = call(' '.join(rh_args))
         if return_code:
