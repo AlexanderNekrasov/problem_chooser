@@ -30,6 +30,7 @@ class RowSpanTableWidget(QtWidgets.QTableWidget):
             newItem = QtWidgets.QTableWidgetItem(text)
             newItem.setFlags(QtCore.Qt.ItemIsEnabled |
                              QtCore.Qt.ItemIsSelectable)
+            newItem.setFont(self.font())
             self.setItem(ind, jnd, newItem)
             jnd += cell_size
 

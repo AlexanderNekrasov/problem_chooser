@@ -386,6 +386,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         font = self.font()
         font.setPointSize(config["main_font_size"])
         self.app.setFont(font)
+        self.table.setFont(font)
         self.update_table()
 
     def save_font_size(self, main_font_size, title_font_size):
