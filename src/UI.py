@@ -311,10 +311,10 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         title_layout.addStretch(2)
 
         # body
-        help_label = QtWidgets.QLabel(text)
-        help_label.setWordWrap(True)
-        scroll_help = QtWidgets.QScrollArea()
-        scroll_help.setWidget(help_label)
+        help_text = QtWidgets.QTextBrowser()
+        help_text.setText(text)
+        help_text.setFocusPolicy(
+            QtCore.Qt.NoFocus | QtCore.Qt.TextSelectableByMouse)
 
         # buttons
         buttons_layout = QtWidgets.QHBoxLayout()
@@ -330,10 +330,10 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
 
         # add parts to window
         help_window.layout().addLayout(title_layout)
-        help_window.layout().addWidget(scroll_help)
+        help_window.layout().addWidget(help_text)
         help_window.layout().addLayout(buttons_layout)
         help_window.resizeEvent = lambda *args: \
-            help_label.setFixedWidth(help_window.width() - 50)
+            help_text.setFixedWidth(help_window.width() - 26)
 
         # show window
         help_window.exec_()
