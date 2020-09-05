@@ -14,11 +14,11 @@ def return_hook_backup():
     try:
         os.replace(backup_path, hook_path)
     except Exception as ex:
-        print("haha loh. error is happened.")
+        print("Error is happened.")
         print(ex)
         return False
     else:
-        print("backup returned")
+        print("Backup returned.")
         return True
 
 
@@ -111,7 +111,8 @@ except Exception as ex:
     save_exit(1)
 else:
     print('BUILD FINISHED')
-    already_returned = return_hook_backup()
+    if cfg.platform == 'mac':
+        already_returned = return_hook_backup()
 
 #                                                                             #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
