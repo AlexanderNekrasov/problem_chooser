@@ -63,7 +63,7 @@ if cfg.platform == 'mac':
     spdir = getsitepackages()[-1]
     hook_path = os.path.join(spdir, 'PyInstaller', 'hooks', 'hook-_tkinter.py')
     if not os.path.exists(hook_path):
-        print('Press F. Hook not found in:')
+        print('Error. Hook not found in:')
         print(hook_path)
         save_exit(1)
     with open(hook_path, 'r') as hookfile:
@@ -73,17 +73,18 @@ if cfg.platform == 'mac':
     line_a_count = hook.count(line_a)
     line_b_count = hook.count(line_b)
     if line_a_count != 1:
-        print("Press F. Needed line is found " + str(line_a_count) + " times.")
+        print("Error. Needed line in hook is found " + str(line_a_count) +
+              " times.")
         save_exit(1)
     if not line_b_count == 0:
-        print("Kek. Hook is already modified. Skip...")
+        print("Hook is already modified. Skip...")
     else:
         hook = hook.replace(line_a, line_b)
         backup_path = hook_path + '.backup'
         try:
             shutil.copy(hook_path, backup_path)
         except Exception as ex:
-            print("Press F. Making backup error.")
+            print("Making hook backup error.")
             print(ex)
             save_exit(1)
         else:
@@ -92,7 +93,7 @@ if cfg.platform == 'mac':
             with open(hook_path, "w") as hookfile:
                 hookfile.write(hook)
         except Exception as ex:
-            print("Press F. Writing modified hook error.")
+            print("Writing modified hook error.")
             print(ex)
             save_exit(1)
         print("Modified!")
