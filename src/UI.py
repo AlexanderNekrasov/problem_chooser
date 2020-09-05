@@ -8,14 +8,14 @@ from src.TableParser import TableParser
 from src.Worker import Worker, reconnect, EMPTY_FUNCTION
 from src.Config import config, save_config, reset_config
 
-
 initializing_parsers_number = 0
 
 
 def initParser(parserClass):
-    global initializing_parsers_number
-    initializing_parsers_number += 1
+    def add(delta):
+        globals()['initializing_parsers_number'] += delta
 
+    add(1)
     name = parserClass.__name__
     parser = None
 
@@ -30,7 +30,7 @@ def initParser(parserClass):
         print(f"Loading {name} from server...")
         parser = parserClass.from_server()
 
-    initializing_parsers_number -= 1
+    add(-1)
     return parser
 
 
@@ -78,8 +78,10 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.lineEdit.setPlaceholderText("Введите ваше имя")
 
         self.lineClear = QtWidgets.QPushButton(" Очистить ")
-        self.lineClear.clicked.connect(
-            lambda: (self.lineEdit.clear(), self.lineEdit.setFocus()))
+        self.lineClear.clicked.connect(lambda:
+                                       (self.lineEdit.clear(),
+                                        self.lineEdit.setFocus(),
+                                        self.table.deselect_all()))
         self.lineClear.setFixedSize(self.reloadButton.size())
 
         self.lineLayout = QtWidgets.QHBoxLayout()
@@ -120,7 +122,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
             self.open_autoinput_config)
 
         self.configResetSubmenu = QtWidgets.QAction("Сбросить")
-        self.configResetSubmenu.triggered.connect(self.reset_config)
+        self.configResetSubmenu.triggered.connect(self.reset_config_confirm)
 
         self.configMenu = self.menubar.addMenu("&Настройки")
         self.configMenu.addAction(self.configFontSubmenu)
@@ -150,12 +152,6 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.save_autoinput_last()
         event.accept()
 
-    def reset_config(self):
-        config.clear()
-        config.update(reset_config())
-        save_config()
-        self.update_font()
-
     def reload_button_animate(self):
         def animate():
             self.reloadButton.setDown(True)
@@ -176,6 +172,9 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
     # # # # # # # # # # # # # # # # #  TABLE  # # # # # # # # # # # # # # # # #
 
     def double_clicked(self):
+        if initializing_parsers_number > 0:
+            print('Initialize is running. Ignoring double click.')
+            return
         item = self.table.currentItem()
         if item.text() in self.tableParser.get_names():
             self.lineEdit.setText(item.text())
@@ -263,7 +262,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
             if is_autoreload:
                 self.autoreloadTimer.stop()
             return
-        elif is_autoreload:
+        if is_autoreload:
             self.reload_button_animate()
             self.autoreload_remaining = config["autoreload_timeout"]
 
@@ -317,10 +316,10 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         title_layout.addStretch(2)
 
         # body
-        help_label = QtWidgets.QLabel(text)
-        help_label.setWordWrap(True)
-        scroll_help = QtWidgets.QScrollArea()
-        scroll_help.setWidget(help_label)
+        help_text = QtWidgets.QTextBrowser()
+        help_text.setText(text)
+        help_text.setFocusPolicy(
+            QtCore.Qt.NoFocus | QtCore.Qt.TextSelectableByMouse)
 
         # buttons
         buttons_layout = QtWidgets.QHBoxLayout()
@@ -336,13 +335,49 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
 
         # add parts to window
         help_window.layout().addLayout(title_layout)
-        help_window.layout().addWidget(scroll_help)
+        help_window.layout().addWidget(help_text)
         help_window.layout().addLayout(buttons_layout)
         help_window.resizeEvent = lambda *args: \
-            help_label.setFixedWidth(help_window.width() - 50)
+            help_text.setFixedWidth(help_window.width() - 26)
 
         # show window
         help_window.exec_()
+
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+    # # # # # # # # # # # # # # # # # RESET CONFIG  # # # # # # # # # # # # # #
+
+    def reset_config_confirm(self):
+        window = QtWidgets.QDialog(self)
+        window.setWindowTitle("Сброс настроек")
+        window.setLayout(QtWidgets.QVBoxLayout())
+
+        text = QtWidgets.QLabel("""Уверены, что хотите сбросить настройки?
+Вы сбросите:
+- Шрифт
+- Автоввод
+- Автообновление""")
+
+        window.layout().addWidget(text)
+
+        ok_button = QtWidgets.QPushButton("Сбросить")
+        ok_button.clicked.connect(lambda:
+                                  (self.reset_config(), window.close()))
+        cancel_button = QtWidgets.QPushButton("Отменить")
+        cancel_button.clicked.connect(window.close)
+        cancel_button.setDefault(True)
+        buttons = [cancel_button, ok_button]
+        buttons_layout = QtWidgets.QHBoxLayout()
+        for b in buttons:
+            buttons_layout.addWidget(b)
+        window.layout().addLayout(buttons_layout)
+
+        window.exec_()
+
+    def reset_config(self):
+        config.clear()
+        config.update(reset_config())
+        save_config()
+        self.update_font()
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
     # # # # # # # # # # # # # # #  FONT SETTINGS  # # # # # # # # # # # # # # #
@@ -351,6 +386,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         font = self.font()
         font.setPointSize(config["main_font_size"])
         self.app.setFont(font)
+        self.table.setFont(font)
         self.update_table()
 
     def save_font_size(self, main_font_size, title_font_size):
