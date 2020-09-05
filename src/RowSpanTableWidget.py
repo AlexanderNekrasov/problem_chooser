@@ -45,3 +45,6 @@ class RowSpanTableWidget(QtWidgets.QTableWidget):
 
     def deselect_all(self):
         self.setCurrentItem(QtWidgets.QTableWidgetItem())
+
+    def focusOutEvent(self, e):
+        self.deselect_all()
