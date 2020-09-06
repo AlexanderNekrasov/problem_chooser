@@ -5,21 +5,33 @@ import cfg
 from src.MainPageParser import MainPageParser
 from src.RowSpanTableWidget import RowSpanTableWidget
 from src.TableParser import TableParser
-from src.Worker import Worker
+from src.Worker import Worker, reconnect, EMPTY_FUNCTION
 from src.Config import config, save_config, reset_config
+
+initializing_parsers_number = 0
 
 
 def initParser(parserClass):
+    def add(delta):
+        globals()['initializing_parsers_number'] += delta
+
+    add(1)
     name = parserClass.__name__
+    parser = None
+
     # parserClass.delete_cache()
     if parserClass.cache_exists():
         try:
             print(f"Loading {name} from cache...")
-            return parserClass.from_cache()
+            parser = parserClass.from_cache()
         except Exception as ex:
             print(ex)
-    print(f"Loading {name} from server...")
-    return parserClass.from_server()
+    if parser is None:
+        print(f"Loading {name} from server...")
+        parser = parserClass.from_server()
+
+    add(-1)
+    return parser
 
 
 class Ui_MainWindow(QtWidgets.QMainWindow):
@@ -44,18 +56,37 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.setCentralWidget(self.centralwidget)
 
         self.headerLabel = QtWidgets.QLabel(self.centralwidget)
-        self.headerLabel.setText("Найдите самые простые задачи для себя")
+        self.headerLabel.setText("Найдите самые простые задачи для себя  ")
 
-        self.reloadButton = QtWidgets.QPushButton("Обновить")
+        self.autoreloadTimer = QtCore.QTimer()
+        self.autoreloadTimer.timeout.connect(self.process_autoreload_time)
+        self.autoreloadTimerLabel = QtWidgets.QLabel(" " * 16)  # font const
+        self.autoreload_remaining = None
+
+        self.reloadButton = QtWidgets.QPushButton(" Обновить ")
         self.reloadButton.clicked.connect(self.reload_table)
+        self.reloadButton.resizeEvent = lambda *args: \
+            self.lineClear.setFixedSize(self.reloadButton.size())
 
         self.header = QtWidgets.QHBoxLayout()
         self.header.addWidget(self.headerLabel, stretch=5)
+        self.header.addWidget(self.autoreloadTimerLabel)
         self.header.addWidget(self.reloadButton, stretch=1)
 
         self.lineEdit = QtWidgets.QLineEdit()
         self.lineEdit.textChanged.connect(self.update_table)
         self.lineEdit.setPlaceholderText("Введите ваше имя")
+
+        self.lineClear = QtWidgets.QPushButton(" Очистить ")
+        self.lineClear.clicked.connect(lambda:
+                                       (self.lineEdit.clear(),
+                                        self.lineEdit.setFocus(),
+                                        self.table.deselect_all()))
+        self.lineClear.setFixedSize(self.reloadButton.size())
+
+        self.lineLayout = QtWidgets.QHBoxLayout()
+        self.lineLayout.addWidget(self.lineEdit)
+        self.lineLayout.addWidget(self.lineClear)
 
         self.table = RowSpanTableWidget(3, self)
         self.table.doubleClicked.connect(self.double_clicked)
@@ -63,28 +94,40 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.main_layout = QtWidgets.QVBoxLayout(self.centralwidget)
         self.main_layout.addLayout(self.header)
         self.main_layout.addSpacing(10)
-        self.main_layout.addWidget(self.lineEdit)
+        self.main_layout.addLayout(self.lineLayout)
         self.main_layout.addWidget(self.table)
 
         self.menubar = QtWidgets.QMenuBar(self)
         self.setMenuBar(self.menubar)
 
-        self.reloadSubmenu = QtWidgets.QAction("Обновить (~5 сек)")
-        self.reloadSubmenu.setShortcut("Ctrl+R")
-        self.reloadSubmenu.triggered.connect(self.reload_table)
+        self.tableReloadSubmenu = QtWidgets.QAction("Обновить (~5 сек)")
+        self.tableReloadSubmenu.setShortcut("Ctrl+R")
+        self.tableReloadSubmenu.triggered.connect(
+            self.reloadButton.animateClick)
+
+        self.tableAutoreloadSubmenu = QtWidgets.QAction(
+            "Автообновление таблицы")
+        self.tableAutoreloadSubmenu.triggered.connect(
+            self.open_autoreload_table)
 
         self.tableMenu = self.menubar.addMenu("&Таблица")
-        self.tableMenu.addAction(self.reloadSubmenu)
+        self.tableMenu.addAction(self.tableReloadSubmenu)
+        self.tableMenu.addAction(self.tableAutoreloadSubmenu)
 
-        self.configSubmenu = QtWidgets.QAction("Шрифт")
-        self.configSubmenu.triggered.connect(self.open_font_config)
+        self.configFontSubmenu = QtWidgets.QAction("Шрифт")
+        self.configFontSubmenu.triggered.connect(self.open_font_config)
 
-        self.resetSubmenu = QtWidgets.QAction("Сбросить")
-        self.resetSubmenu.triggered.connect(self.reset_config)
+        self.configAutoinputSubmenu = QtWidgets.QAction("Автоввод имени")
+        self.configAutoinputSubmenu.triggered.connect(
+            self.open_autoinput_config)
+
+        self.configResetSubmenu = QtWidgets.QAction("Сбросить")
+        self.configResetSubmenu.triggered.connect(self.reset_config_confirm)
 
         self.configMenu = self.menubar.addMenu("&Настройки")
-        self.configMenu.addAction(self.configSubmenu)
-        self.configMenu.addAction(self.resetSubmenu)
+        self.configMenu.addAction(self.configFontSubmenu)
+        self.configMenu.addAction(self.configAutoinputSubmenu)
+        self.configMenu.addAction(self.configResetSubmenu)
 
         self.helpSubmenu = QtWidgets.QAction("О программе")
         self.helpSubmenu.setShortcut("Ctrl+H")
@@ -95,15 +138,61 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
 
         self.statusbar = QtWidgets.QStatusBar(self)
         self.statusbarLabel = QtWidgets.QLabel()
+        self.statusbarTimer = QtCore.QTimer()
         self.statusbar.addWidget(self.statusbarLabel)
         self.setStatusBar(self.statusbar)
         self.set_last_reload_time()
 
         self.update_table()
+        self.reload_table(initialize=True)
+        self.load_autoinput()
+        self.update_autoreload()
 
-        self.statusbarLabel.setText(" Обновление... ")
-        self.worker = Worker()
-        self.worker(self.initParsers, self.on_reload_finished)
+    def closeEvent(self, event):
+        self.save_autoinput_last()
+        event.accept()
+
+    def reload_button_animate(self):
+        def animate():
+            self.reloadButton.setDown(True)
+            self.worker.msleep(200)
+            self.reloadButton.setDown(False)
+
+        self.worker(animate, EMPTY_FUNCTION)
+
+    @staticmethod
+    def format_time(secs):
+        s = secs % 60
+        m = secs // 60 % 60
+        h = secs // 60 // 60
+        nums = ('{:0>2}'.format(el) for el in (h, m, s))
+        return ':'.join(nums)
+
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+    # # # # # # # # # # # # # # # # #  TABLE  # # # # # # # # # # # # # # # # #
+
+    def double_clicked(self):
+        if initializing_parsers_number > 0:
+            print('Initialize is running. Ignoring double click.')
+            return
+        item = self.table.currentItem()
+        if item.text() in self.tableParser.get_names():
+            self.lineEdit.setText(item.text())
+            return
+        cells = self.table.getRow(item.row())
+        if item.column() == 0:
+            url = self.mainPageParser.get_contest_url_by_id(cells[0].text())
+            if url is not None:
+                webbrowser.open(url)
+        elif item.column() == 1:
+            url = self.mainPageParser.get_statements_url_by_id(cells[0].text())
+            if url is not None:
+                url += "#prob_" + item.text()
+                webbrowser.open(url)
+        elif item.column() == 2:
+            url = self.mainPageParser.get_results_url_by_id(cells[0].text())
+            if url is not None:
+                webbrowser.open(url)
 
     def update_table(self):
         name = self.lineEdit.text().lower()
@@ -135,6 +224,69 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
             self.table.appendRow([3], ["Не найдено"])
             self.table.item(0, 0).setTextAlignment(QtCore.Qt.AlignHCenter)
 
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+    # # # # # # # # # # # # # # #  TABLE RELOAD   # # # # # # # # # # # # # # #
+
+    def set_last_reload_time(self):
+        self.statusbarLabel.setText(self.get_last_reload_time())
+
+    def get_last_reload_time(self):
+        if self.tableParser.last_reload_time is None:
+            strtime = "undefined"
+        else:
+            strtime = self.tableParser.last_reload_time.strftime("%x %X")
+        return " Последнее обновление: " + strtime + " "
+
+    def on_reload_finished(self):
+        if self.tableParser.isReloading() or self.mainPageParser.isReloading():
+            print('Still reloading...')
+            return
+        print('Reload finished')
+        self.statusbarTimer.stop()
+        self.statusbarLabel.setText(self.get_last_reload_time())
+        self.set_last_reload_time()
+        self.update_table()
+        if self.autoreload_remaining == 0:
+            self.reload_table(is_autoreload=True)
+            self.update_autoreload()
+
+    def is_reloading(self):
+        return initializing_parsers_number > 0 or \
+               self.tableParser.isReloading() or \
+               self.mainPageParser.isReloading()
+
+    def reload_table(self, initialize=False, is_autoreload=False):
+        already_run = not initialize and self.is_reloading()
+        if already_run:
+            print("Already reloading")
+            if is_autoreload:
+                self.autoreloadTimer.stop()
+            return
+        if is_autoreload:
+            self.reload_button_animate()
+            self.autoreload_remaining = config["autoreload_timeout"]
+
+        def show_statusbar_reloading():
+            nonlocal timer_count
+            self.statusbarLabel.setText(f" Обновление... {timer_count}с ")
+            timer_count += 1
+
+        reconnect(self.statusbarTimer.timeout, show_statusbar_reloading)
+        timer_count = 0
+        show_statusbar_reloading()
+        self.statusbarTimer.start(1000)
+
+        if initialize:
+            print('Initializing parsers...')
+            self.worker = Worker()
+            self.worker(self.initParsers, self.on_reload_finished)
+        else:
+            self.tableParser.reload(self.on_reload_finished)
+            self.mainPageParser.reload(self.on_reload_finished)
+
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+    # # # # # # # # # # # # # # # #  HELP MENU  # # # # # # # # # # # # # # # #
+
     def open_help(self):
         with open(cfg.resource("help"), "r", encoding="utf-8") as f:
             text = f.read().strip()
@@ -145,12 +297,12 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
             suggest_link = f.read().strip()
         # init window
         help_window = QtWidgets.QDialog(self)
-        help_window.setWindowTitle('О программе')
+        help_window.setWindowTitle("О программе")
         help_window.resize(self.width() + 50, 600)
         help_window.setLayout(QtWidgets.QVBoxLayout())
 
         # title
-        img = QtGui.QPixmap(cfg.resource('icon.ico'))
+        img = QtGui.QPixmap(cfg.resource("icon.ico"))
         title_layout = QtWidgets.QHBoxLayout()
         img_label = QtWidgets.QLabel()
         img_label.setPixmap(img)
@@ -164,15 +316,16 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         title_layout.addStretch(2)
 
         # body
-        help_label = QtWidgets.QLabel(text)
-        help_label.setWordWrap(True)
-        scroll_help = QtWidgets.QScrollArea()
-        scroll_help.setWidget(help_label)
+        help_text = QtWidgets.QTextBrowser()
+        help_text.setText(text)
+        help_text.setFocusPolicy(
+            QtCore.Qt.NoFocus | QtCore.Qt.TextSelectableByMouse)
 
         # buttons
         buttons_layout = QtWidgets.QHBoxLayout()
         suggest_button = QtWidgets.QPushButton("Поддержать")
-        suggest_button.clicked.connect(lambda: webbrowser.open(suggest_link))
+        suggest_button.clicked.connect(
+            lambda: webbrowser.open(suggest_link))
         ok_button = QtWidgets.QPushButton("ОК")
         ok_button.clicked.connect(help_window.close)
         ok_button.setDefault(True)
@@ -182,72 +335,58 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
 
         # add parts to window
         help_window.layout().addLayout(title_layout)
-        help_window.layout().addWidget(scroll_help)
+        help_window.layout().addWidget(help_text)
         help_window.layout().addLayout(buttons_layout)
-        help_window.resizeEvent = lambda *args: help_label.setFixedWidth(
-            help_window.width() - 50)
+        help_window.resizeEvent = lambda *args: \
+            help_text.setFixedWidth(help_window.width() - 40)
 
         # show window
         help_window.exec_()
 
-    def set_last_reload_time(self):
-        self.statusbarLabel.setText(self.get_last_reload_time())
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+    # # # # # # # # # # # # # # # # # RESET CONFIG  # # # # # # # # # # # # # #
 
-    def get_last_reload_time(self):
-        if self.tableParser.last_reload_time is None:
-            strtime = "undefined"
-        else:
-            strtime = self.tableParser.last_reload_time.strftime("%x %X")
-        return " Последнее обновление: " + strtime + " "
+    def reset_config_confirm(self):
+        window = QtWidgets.QDialog(self)
+        window.setWindowTitle("Сброс настроек")
+        window.setLayout(QtWidgets.QVBoxLayout())
 
-    def on_reload_finished(self):
-        self.statusbarLabel.setText(self.get_last_reload_time())
-        self.set_last_reload_time()
-        self.update_table()
+        text = QtWidgets.QLabel("""Уверены, что хотите сбросить настройки?
+Вы сбросите:
+- Шрифт
+- Автоввод
+- Автообновление""")
 
-    def reload_table(self):
-        if self.tableParser.isReloading():
-            print("Already reloading")
-            return
-        self.statusbarLabel.setText(" Обновление... ")
-        self.tableParser.reload(self.on_reload_finished)
-        self.mainPageParser.reload()
+        window.layout().addWidget(text)
 
-    def double_clicked(self):
-        item = self.table.currentItem()
-        if item.text() in self.tableParser.get_names():
-            self.lineEdit.setText(item.text())
-            return
-        cells = self.table.getRow(item.row())
-        if item.column() == 0:
-            url = self.mainPageParser.get_contest_url_by_id(cells[0].text())
-            if url is not None:
-                webbrowser.open(url)
-        elif item.column() == 1:
-            url = self.mainPageParser.get_statements_url_by_id(cells[0].text())
-            if url is not None:
-                url += "#prob_" + item.text()
-                webbrowser.open(url)
-        elif item.column() == 2:
-            url = self.mainPageParser.get_results_url_by_id(cells[0].text())
-            if url is not None:
-                webbrowser.open(url)
+        ok_button = QtWidgets.QPushButton("Сбросить")
+        ok_button.clicked.connect(lambda:
+                                  (self.reset_config(), window.close()))
+        cancel_button = QtWidgets.QPushButton("Отменить")
+        cancel_button.clicked.connect(window.close)
+        cancel_button.setDefault(True)
+        buttons = [cancel_button, ok_button]
+        buttons_layout = QtWidgets.QHBoxLayout()
+        for b in buttons:
+            buttons_layout.addWidget(b)
+        window.layout().addLayout(buttons_layout)
 
-    @staticmethod
-    def font_config_item(name, pretty_name):
-        layout = QtWidgets.QHBoxLayout()
-        label = QtWidgets.QLabel(pretty_name)
-        layout.addWidget(label, stretch=1)
-        spin_box = QtWidgets.QSpinBox()
-        spin_box.setRange(3, 50)
-        spin_box.setValue(config[name])
-        layout.addWidget(spin_box)
-        return layout, spin_box.value
+        window.exec_()
+
+    def reset_config(self):
+        config.clear()
+        config.update(reset_config())
+        save_config()
+        self.update_font()
+
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+    # # # # # # # # # # # # # # #  FONT SETTINGS  # # # # # # # # # # # # # # #
 
     def update_font(self):
         font = self.font()
         font.setPointSize(config["main_font_size"])
         self.app.setFont(font)
+        self.table.setFont(font)
         self.update_table()
 
     def save_font_size(self, main_font_size, title_font_size):
@@ -256,38 +395,189 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         save_config()
         self.update_font()
 
-    def reset_config(self):
-        config.clear()
-        config.update(reset_config())
-        save_config()
-        self.update_font()
-
     def open_font_config(self):
-        font_config_window = QtWidgets.QDialog(self)
-        font_config_window.setWindowTitle("Настройки шрифта")
-        font_config_window.setLayout(QtWidgets.QVBoxLayout())
-        font_config_window.layout().addWidget(
-            QtWidgets.QLabel("Выберите размеры шрифтов"))
-        lay, get_main_font_size = self.font_config_item("main_font_size",
+        def font_config_item(name, pretty_name):
+            layout = QtWidgets.QHBoxLayout()
+            label = QtWidgets.QLabel(pretty_name)
+            layout.addWidget(label, stretch=1)
+            spin_box = QtWidgets.QSpinBox()
+            spin_box.setRange(3, 50)
+            spin_box.setValue(config[name])
+            layout.addWidget(spin_box)
+            return layout, spin_box.value
+
+        window = QtWidgets.QDialog(self)
+        window.setWindowTitle("Настройки шрифта")
+        window.setLayout(QtWidgets.QVBoxLayout())
+
+        lay_main, get_main_font_size = font_config_item("main_font_size",
                                                         "Основной шрифт:")
-        font_config_window.layout().addLayout(lay)
-        lay, get_title_font_size = self.font_config_item("title_font_size",
-                                                         "Шрифт заголовков:")
-        font_config_window.layout().addLayout(lay)
-        ok_button = QtWidgets.QPushButton("Сохранить")
+        lay_title, get_title_font_size = font_config_item("title_font_size",
+                                                          "Шрифт заголовков:")
+        window.layout().addWidget(QtWidgets.QLabel("Выберите размеры шрифтов"))
+        window.layout().addLayout(lay_main)
+        window.layout().addLayout(lay_title)
 
         def save():
             self.save_font_size(get_main_font_size(), get_title_font_size())
-            font_config_window.close()
+            window.close()
 
+        ok_button = QtWidgets.QPushButton("Сохранить")
         ok_button.clicked.connect(save)
         ok_button.setDefault(True)
         cancel_button = QtWidgets.QPushButton("Отменить")
-        cancel_button.clicked.connect(font_config_window.close)
+        cancel_button.clicked.connect(window.close)
         buttons = [cancel_button, ok_button]
         buttons_layout = QtWidgets.QHBoxLayout()
         for b in buttons:
             buttons_layout.addWidget(b)
-        font_config_window.layout().addLayout(buttons_layout)
+        window.layout().addLayout(buttons_layout)
 
-        font_config_window.exec_()
+        window.exec_()
+
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+    # # # # # # # # # # # # # # AUTO INPUT SETTINGS # # # # # # # # # # # # # #
+
+    def load_autoinput(self):
+        if config["is_autoinput_last"]:
+            text = config["autoinput_last"]
+        else:
+            text = config["autoinput_text"]
+        self.lineEdit.setText(text)
+
+    @staticmethod
+    def save_autoinput(line, checkBox):
+        config["is_autoinput_last"] = checkBox.isChecked()
+        config["autoinput_text"] = line.text()
+        save_config()
+
+    def save_autoinput_last(self):
+        config["autoinput_last"] = self.lineEdit.text()
+        save_config()
+
+    def open_autoinput_config(self):
+        font_size = config["main_font_size"]
+        window = QtWidgets.QDialog(self)
+        window.setWindowTitle("Автоввод имени")
+        window.setLayout(QtWidgets.QVBoxLayout())
+
+        def checkbox_clicked(state):
+            line.setDisabled(state == QtCore.Qt.Checked)
+
+        line = QtWidgets.QLineEdit(config["autoinput_text"])
+        line.setPlaceholderText("Имя по умолчанию")
+
+        checkBox = QtWidgets.QCheckBox()
+        checkBox.stateChanged.connect(checkbox_clicked)
+        checkBox_size = int(font_size * 1.25)
+        checkBox.setStyleSheet(  # set size
+            f"QCheckBox::indicator {{ width: {checkBox_size}px; \
+                                      height: {checkBox_size}px; }}")
+        checkBox.setChecked(config["is_autoinput_last"])
+        checkbox_clicked(checkBox.isChecked())
+
+        input_last = QtWidgets.QHBoxLayout()
+        input_last.addWidget(QtWidgets.QLabel("Запоминать последнее имя?"))
+        input_last.addStretch(1)
+        input_last.addSpacing(font_size * 5)
+        input_last.addWidget(checkBox)
+
+        window.layout().addLayout(input_last)
+        window.layout().addWidget(line)
+
+        def save():
+            self.save_autoinput(line, checkBox)
+            window.close()
+
+        ok_button = QtWidgets.QPushButton("Сохранить")
+        ok_button.clicked.connect(save)
+        ok_button.setDefault(True)
+        cancel_button = QtWidgets.QPushButton("Отменить")
+        cancel_button.clicked.connect(window.close)
+        buttons = [cancel_button, ok_button]
+        buttons_layout = QtWidgets.QHBoxLayout()
+        for b in buttons:
+            buttons_layout.addWidget(b)
+        window.layout().addLayout(buttons_layout)
+
+        window.exec_()
+
+    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+    # # # # # # # # # # # # # #  AUTO RELOAD TABLE  # # # # # # # # # # # # # #
+
+    def process_autoreload_time(self):
+        self.autoreloadTimerLabel.setText(
+            self.format_time(self.autoreload_remaining))
+        if self.autoreload_remaining == 0:
+            self.reload_table(is_autoreload=True)
+        else:
+            self.autoreload_remaining -= 1
+
+    def update_autoreload(self):
+        self.autoreloadTimer.stop()
+        if config["is_autoreload"]:
+            self.autoreload_remaining = config["autoreload_timeout"]
+            self.autoreloadTimer.start(1000)
+        else:
+            self.autoreloadTimerLabel.setText(" " * 16)
+            self.autoreload_remaining = None
+
+    def save_autoreload(self, spinBox, checkBox):
+        config["is_autoreload"] = checkBox.isChecked()
+        config["autoreload_timeout"] = spinBox.value()
+        save_config()
+        self.update_autoreload()
+
+    def open_autoreload_table(self):
+        font_size = config["main_font_size"]
+        window = QtWidgets.QDialog(self)
+        window.setWindowTitle("Автообновление таблицы")
+        window.setLayout(QtWidgets.QVBoxLayout())
+
+        def checkbox_clicked(state):
+            spinBox.setEnabled(state)
+
+        spinBox = QtWidgets.QSpinBox()
+        spinBox.setRange(0, 359999)
+        spinBox.setValue(config["autoreload_timeout"])
+        sec_layout = QtWidgets.QHBoxLayout()
+        sec_layout.addWidget(QtWidgets.QLabel("Секунд между обновлениями:"))
+        sec_layout.addStretch(1)
+        sec_layout.addWidget(spinBox)
+
+        checkBox = QtWidgets.QCheckBox()
+        checkBox.stateChanged.connect(checkbox_clicked)
+        checkBox_size = int(font_size * 1.25)
+        checkBox.setStyleSheet(  # set size
+            f"QCheckBox::indicator {{ width: {checkBox_size}px; \
+                                      height: {checkBox_size}px; }}")
+
+        checkBox.setChecked(config["is_autoreload"])
+        checkbox_clicked(checkBox.isChecked())
+
+        is_autoreload = QtWidgets.QHBoxLayout()
+        is_autoreload.addWidget(
+            QtWidgets.QLabel("Использовать автообновление таблицы?"))
+        is_autoreload.addStretch(1)
+        is_autoreload.addSpacing(font_size)
+        is_autoreload.addWidget(checkBox)
+
+        window.layout().addLayout(is_autoreload)
+        window.layout().addLayout(sec_layout)
+
+        def save():
+            self.save_autoreload(spinBox, checkBox)
+            window.close()
+
+        ok_button = QtWidgets.QPushButton("Сохранить")
+        ok_button.clicked.connect(save)
+        ok_button.setDefault(True)
+        cancel_button = QtWidgets.QPushButton("Отменить")
+        cancel_button.clicked.connect(window.close)
+        buttons = [cancel_button, ok_button]
+        buttons_layout = QtWidgets.QHBoxLayout()
+        for b in buttons:
+            buttons_layout.addWidget(b)
+        window.layout().addLayout(buttons_layout)
+
+        window.exec_()

@@ -6,6 +6,27 @@ import zipfile
 import cfg
 from platform import architecture
 import re
+from site import getsitepackages
+
+
+def return_hook_backup():
+    print("Returning hook backup back")
+    try:
+        os.replace(backup_path, hook_path)
+    except Exception as ex:
+        print("Error is happened.")
+        print(ex)
+        return False
+    else:
+        print("Backup returned.")
+        return True
+
+
+def save_exit(code):
+    if hook_modifying and not already_returned:
+        return_hook_backup()
+    sys.exit(code)
+
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 #                                GET ARGUMENTS                                #
@@ -16,7 +37,7 @@ ADD_ICON = '--add-icon' in args
 
 if cfg.platform == 'unknown':
     print('Unknown platform:', sys.platform)
-    exit(0)
+    save_exit(0)
 print('Run on:', cfg.platform)
 
 spec_path = os.path.join('arch', cfg.platform + '.spec')
@@ -26,11 +47,60 @@ if cfg.platform == 'win':
 
 #                                                                             #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-#                           BUILD, CLEAN AND RENAME                           #
+#                                BUILD PREPARE                                #
+
+hook_modifying = False
+already_returned = False
+hook_path = ""
+backup_path = ""
 
 shutil.rmtree(NAME, ignore_errors=True)
 shutil.rmtree('build', ignore_errors=True)
 shutil.rmtree('dist', ignore_errors=True)
+
+if cfg.platform == 'mac':
+    print("Running tkinter hook trick:")
+    spdir = getsitepackages()[-1]
+    hook_path = os.path.join(spdir, 'PyInstaller', 'hooks', 'hook-_tkinter.py')
+    if not os.path.exists(hook_path):
+        print('Error. Hook not found in:')
+        print(hook_path)
+        save_exit(1)
+    with open(hook_path, 'r') as hookfile:
+        hook = hookfile.read()
+    line_a = "if 'Library/Frameworks' in path_to_tcl"
+    line_b = line_a + " and 'Python' not in path_to_tcl"
+    line_a_count = hook.count(line_a)
+    line_b_count = hook.count(line_b)
+    if line_a_count != 1:
+        print("Error. Needed line in hook is found " + str(line_a_count) +
+              " times.")
+        save_exit(1)
+    if not line_b_count == 0:
+        print("Hook is already modified. Skip...")
+    else:
+        hook = hook.replace(line_a, line_b)
+        backup_path = hook_path + '.backup'
+        try:
+            shutil.copy(hook_path, backup_path)
+        except Exception as ex:
+            print("Making hook backup error.")
+            print(ex)
+            save_exit(1)
+        else:
+            hook_modifying = True
+        try:
+            with open(hook_path, "w") as hookfile:
+                hookfile.write(hook)
+        except Exception as ex:
+            print("Writing modified hook error.")
+            print(ex)
+            save_exit(1)
+        print("Modified!")
+
+#                                                                             #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+#                                  BUILDING                                   #
 
 print("\nBUILDING...")
 try:
@@ -38,20 +108,29 @@ try:
 except Exception as ex:
     print("\nBUILDING FAILED\n")
     print(ex)
-    sys.exit(1)
+    save_exit(1)
 else:
     print('BUILD FINISHED')
-
-shutil.rmtree('build')
-dirname = os.listdir('dist')[0]
-shutil.move('dist', NAME)
-if os.path.exists(os.path.join(NAME, 'dist')):
-    print('\nOOOPS!\nBug with "dist" instead of "problem-chooser"')
-    exit(1)
+    if cfg.platform == 'mac':
+        already_returned = return_hook_backup()
 
 #                                                                             #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-#                             MOVING FILES TO LIB                             #
+#                                BUILD FINISH                                 #
+
+
+shutil.rmtree('build')
+shutil.move('dist', NAME)
+
+if os.path.exists(os.path.join(NAME, 'dist')):
+    print('\nOOOPS!\nBug with "dist" instead of "problem-chooser"')
+    save_exit(1)
+
+#                                                                             #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+#                                 FILE TRICKS                                 #
+
+dirname = "problem-chooser"
 
 if cfg.platform == 'win':
     exec_loc = os.path.join(NAME, dirname)
@@ -71,6 +150,9 @@ if cfg.platform == 'win':
             shutil.move(os.path.join(exec_loc, name), lib_path)
     shutil.move(os.path.join(exec_loc, 'PyQt5', 'Qt', 'plugins', 'platforms'),
                 os.path.join(exec_loc, 'platforms'))
+elif cfg.platform == 'mac':
+    shutil.rmtree(os.path.join(NAME, dirname), ignore_errors=True)
+    dirname = "problem-chooser.app"
 
 #                                                                             #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -82,15 +164,15 @@ if ADD_ICON:
         from subprocess import call
 
         rh_args = ['ResourceHacker.exe',
-                   '-open', exec_path,
-                   '-save', exec_path,
+                   '-open', '"' + exec_path + '"',
+                   '-save', '"' + exec_path + '"',
                    '-action', 'addskip',
-                   '-res', cfg.resource('icon.ico'),
+                   '-res', '"' + cfg.resource('icon.ico') + '"',
                    '-mask', 'ICONGROUP,MAINICON']
         return_code = call(' '.join(rh_args))
         if return_code:
             print('ResourceHacker error')
-            exit(return_code)
+            save_exit(return_code)
     else:
         print("--add-icon doesn't make sense on " + cfg.platform)
 
@@ -99,12 +181,12 @@ if ADD_ICON:
 #                                  MAKE ZIP                                   #
 
 if MAKE_ZIP:
-    if cfg.platform == 'mac':
-        shutil.rmtree(os.path.join(NAME, dirname))
     print("\nMaking zip")
     with zipfile.ZipFile(NAME + '.zip', 'w', zipfile.ZIP_DEFLATED) as z:
-        for root, dirs, files in os.walk(NAME):
+        for root, dirs, files in os.walk(NAME, followlinks=True):
             pth = os.path.join('.', *root.strip(os.sep).split(os.sep)[1:])
+            print("Adding:", pth)
+            z.write(root, pth)
             for f in files:
                 filezippath = os.path.join(pth, f)
                 print('Adding:', filezippath)

@@ -4,7 +4,12 @@ import cfg
 from copy import deepcopy
 
 default_config = {"main_font_size": 11,
-                  "title_font_size": 20}
+                  "title_font_size": 20,
+                  "is_autoinput_last": False,
+                  "autoinput_text": "",
+                  "autoinput_last": "",
+                  "is_autoreload": False,
+                  "autoreload_timeout": 600}
 
 config = None
 
@@ -12,7 +17,13 @@ config = None
 def load_config():
     print("Loading config file from", cfg.CONFIG_LOCATION)
     try:
-        return json.load(open(cfg.CONFIG_LOCATION))
+        new_config = json.load(open(cfg.CONFIG_LOCATION))
+        for key in default_config:
+            if key not in new_config:
+                val = deepcopy(default_config[key])
+                new_config[key] = val
+                print("Loading new key:", key, "=", val)
+        return new_config
     except json.decoder.JSONDecodeError:
         print("Your config file is corrupted")
         return reset_config()
