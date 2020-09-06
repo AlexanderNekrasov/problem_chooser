@@ -337,8 +337,6 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         help_window.layout().addLayout(title_layout)
         help_window.layout().addWidget(help_text)
         help_window.layout().addLayout(buttons_layout)
-        help_window.resizeEvent = lambda *args: \
-            help_text.setFixedWidth(help_window.width() - 40)
 
         # show window
         help_window.exec_()
