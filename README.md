@@ -8,7 +8,7 @@
 
 Приложение доступно только для систем Windows, Linux и Mac OS.
 
-Скачайте [отсюда](https://github.com/AlexanderNekrasov/problem_chooser/releases/tag/v2.0) архив `problem-chooser-v2.0-OS.zip` для своей операционной системы.
+Скачайте [отсюда](https://github.com/AlexanderNekrasov/problem_chooser/releases/tag/v2.0.1) архив `problem-chooser-v2.0.1-OS.zip` для своей операционной системы.
 
 После разархивации появится файл `problem-chooser` (с расширением для вашей операционной системы).
 Запустите этот файл. Готово!
