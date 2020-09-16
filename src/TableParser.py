@@ -100,7 +100,7 @@ class Participant:
             if ver not in ALLOWED_VERDICTS:
                 raise Exception(f'Oops! Unknown verdict "{ver}"')
             self.verdicts.append(ver)
-            if ver in ('DQ', 'PR'):
+            if ver in ('DQ', 'PR') or td.text == '?':
                 num = 1
             else:
                 num = int('0' + re.match(r'[-+.](\d*)', td.text).group(1))
